@@ -30,14 +30,14 @@ export function messagesView() {
     unread.length ? h('button', { class: 'btn btn-sm', type: 'button', onclick: markAll }, icon('check', 16), 'Hepsini okundu yap') : null);
 
   if (!state.messages.length) {
-    return h('div', {}, h('p', { class: 'empty' }, 'Henüz mesaj yok. İletişim formundan gelen mesajlar burada görünür.'));
+    return h('div', {}, h('h2', { class: 'section-title' }, 'Gelen mesajlar'), h('p', { class: 'empty' }, 'Henüz mesaj yok. İletişim formundan gelen mesajlar burada görünür.'));
   }
 
-  return h('div', {}, bar,
+  return h('div', {}, h('h2', { class: 'section-title' }, 'Gelen mesajlar'), bar,
     list.length ? list.map((m) => h('article', { class: `message${m.is_read ? '' : ' unread'}` },
       h('h3', {}, m.name, !m.is_read ? h('span', { class: 'badge badge-live' }, 'Yeni') : null),
       h('p', { class: 'meta', title: fmtDate(m.created_at) }, relTime(m.created_at), m.subject ? `, konu: ${m.subject}` : '',
-        m.mailed ? ', e-posta ile de iletildi' : ', e-posta gönderilmedi (yalnızca burada)'),
+        m.mailed ? ', bildirim de gönderildi' : ', bildirim gönderilmedi (yalnızca burada)'),
       h('p', { class: 'meta' }, h('a', { href: `mailto:${mailAddr(m.email)}` }, m.email), m.phone ? h('span', {}, ` / ${m.phone}`) : null),
       h('p', { class: 'body' }, m.body),
       h('div', { class: 'actions' },

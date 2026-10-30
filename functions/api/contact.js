@@ -1,6 +1,7 @@
 import { HttpError, assertSameOrigin, handler, json, readJson, uuid } from '../../lib/http.js';
 import { ipKey, rateCheck, rateHit, tooMany } from '../../lib/auth.js';
 import { notifyByMail } from '../../lib/mail.js';
+import { notifyTelegram } from '../../lib/notify.js';
 import { record } from '../../lib/stats.js';
 
 // Yalnızca güvenli karakterler: ? & = gibi URL/mailto anlamı taşıyanlar reddedilir (mailto parametre enjeksiyonu).
@@ -44,9 +45,14 @@ export const onRequestPost = handler(async (context) => {
   context.waitUntil(record(env, 'msg'));
 
   // Mesaj önce veritabanına yazılır; e-posta gitmese bile kaybolmaz (admin panelinde görünür).
-  const send = notifyByMail(env, msg)
-    .then((ok) => ok && env.DB.prepare('UPDATE messages SET mailed = 1 WHERE id = ?').bind(id).run())
-    .catch((e) => console.error('E-posta gönderilemedi:', e && e.message));
+  const origin = new URL(request.url).origin;
+  const send = Promise.allSettled([notifyByMail(env, msg), notifyTelegram(env, msg, origin)])
+    .then((results) => {
+      results.forEach((r) => r.status === 'rejected' && console.error('Bildirim gönderilemedi:', r.reason && r.reason.message));
+      const delivered = results.some((r) => r.status === 'fulfilled' && r.value);
+      return delivered && env.DB.prepare('UPDATE messages SET mailed = 1 WHERE id = ?').bind(id).run();
+    })
+    .catch((e) => console.error('Bildirim hatası:', e && e.message));
   context.waitUntil(send);
 
   return json({ ok: true });

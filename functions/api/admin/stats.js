@@ -43,7 +43,7 @@ export const onRequestGet = handler(async ({ env }) => {
       password: Boolean(pw),
       project: projects.total > 0,
       portrait: Boolean(site.about.photo),
-      mail: Boolean(env.RESEND_API_KEY && env.CONTACT_TO),
+      mail: Boolean((env.RESEND_API_KEY && env.CONTACT_TO) || (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID)),
     },
   });
 });

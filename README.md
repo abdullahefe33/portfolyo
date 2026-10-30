@@ -10,7 +10,7 @@ npm install
 npm run db:local                       # D1 tablolarını oluşturur (yerel)
 npm run admin:set                      # yönetici hesabı oluşturur, rastgele parolayı bir kez yazdırır
 npm run dev                            # http://127.0.0.1:8788  (panel: /admin/)
-npm test                               # Playwright testleri (78 test)
+npm test                               # Playwright testleri (85 test)
 ```
 
 ## Cloudflare'e yayınlama (`.pages.dev`)
@@ -87,3 +87,9 @@ tests/e2e/   Playwright testleri
 Çizimler `lib/art.js` içinde elle yazılmış SVG'lerdir (dron, klaket, makara, kamera maskotu, 8 hizmet ve 4 süreç ikonu, bulut, güneş, uçak).
 Renkler ve hareketleri `public/assets/art.css` yönetir; imleci izleyen göz, harf harf isim ve paralaks `public/assets/site.js` içindedir.
 Tüm hareketler `prefers-reduced-motion` tercihine uyar, ekran dışındaki çizimler duraklar. Paylaşım önizleme görseli `scripts/make-og.mjs` ile üretilir (`public/og.jpg`).
+
+## Bildirimler ve telefonda kullanım
+
+- **Yeni mesaj bildirimi:** Telegram botu (ücretsiz). `TELEGRAM_BOT_TOKEN` ve `TELEGRAM_CHAT_ID` gizli değerlerini Cloudflare'de tanımlayın; adımlar panelde Hesap > Sık sorulanlar içinde. E-posta için Resend de desteklenir (`RESEND_API_KEY`, `CONTACT_TO`).
+- **Panel uygulama gibi:** `/admin/` telefonun ana ekranına eklenebilir (manifest ve simgeler hazır).
+- **Erişilebilirlik:** axe-core testi (`tests/e2e/a11y.spec.js`) site ve panelde 0 ihlal bekler.

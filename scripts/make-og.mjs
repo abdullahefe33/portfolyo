@@ -32,5 +32,11 @@ await page.screenshot({ path: new URL('../public/og.jpg', import.meta.url).pathn
 const icon = await browser.newPage({ viewport: { width: 180, height: 180 } });
 await icon.setContent(`<body style="margin:0">${(await import('node:fs')).readFileSync(new URL('../public/favicon.svg', import.meta.url), 'utf8').replace('<svg ', '<svg width="180" height="180" ')}</body>`);
 await icon.screenshot({ path: new URL('../public/apple-touch-icon.png', import.meta.url).pathname });
+// Yönetim paneli uygulama simgeleri (ana ekrana ekleme)
+for (const size of [192, 512]) {
+  const pg = await browser.newPage({ viewport: { width: size, height: size } });
+  await pg.setContent(`<body style="margin:0">${(await import('node:fs')).readFileSync(new URL('../public/favicon.svg', import.meta.url), 'utf8').replace('<svg ', `<svg width="${size}" height="${size}" `)}</body>`);
+  await pg.screenshot({ path: new URL(`../public/admin/icon-${size}.png`, import.meta.url).pathname });
+}
 await browser.close();
-console.log('public/og.jpg ve public/apple-touch-icon.png hazır');
+console.log('public/og.jpg, apple-touch-icon.png ve yönetim paneli simgeleri hazır');

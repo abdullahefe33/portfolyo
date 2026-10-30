@@ -31,8 +31,18 @@ const HELP = [
     'Site içeriği sekmesinde ilgili başlığı açın, yazıyı değiştirin ve alttaki "Değişiklikleri kaydet" düğmesine basın.']],
   ['Kendi alan adımı (örn. adiniz.com) nasıl bağlarım?', [
     'Alan adını bir firmadan satın alın. Sonra Cloudflare\'de projenizin "Custom domains" bölümünden ekleyin. Takılırsanız bana ya da geliştiricinize yazın.']],
+  ['Paneli telefonumun ana ekranına nasıl eklerim?', [
+    'Panel adresini (sitenizin sonuna /admin/ yazarak) telefonunuzda açın ve giriş yapın.',
+    'Android (Chrome): sağ üstteki üç nokta menüsünden "Ana ekrana ekle" ya da "Uygulamayı yükle" deyin.',
+    'iPhone (Safari): alttaki Paylaş düğmesine basıp "Ana Ekrana Ekle" deyin. Artık uygulama gibi tek dokunuşla açılır.']],
+  ['Mesajlar telefonuma bildirim olarak nasıl gelir? (Telegram)', [
+    'Telegram\'da @BotFather\'ı bulun, /newbot yazın ve adımları izleyin. Size "token" denen uzun bir kod verir; kopyalayın.',
+    'Yeni botunuzu açıp ona "merhaba" yazın.',
+    'Tarayıcıda şu adresi açın (TOKEN yerine kendi kodunuzu yazın): api.telegram.org/botTOKEN/getUpdates . Çıkan yazıda "chat":{"id": ile başlayan sayıyı not edin.',
+    'Cloudflare\'de projenize girin: Settings, Variables and Secrets. İki gizli değer ekleyin: TELEGRAM_BOT_TOKEN (token) ve TELEGRAM_CHAT_ID (not ettiğiniz sayı).',
+    'Deployments sekmesinde son yayına "Retry deployment" deyin. Sonra sitenizden kendinize bir mesaj gönderip telefonunuza bildirim düşüp düşmediğine bakın.']],
   ['Mesajlar neden e-postama gelmiyor?', [
-    'E-posta bildirimi için ücretsiz bir Resend hesabı kurulması gerekir. Kurulana kadar tüm mesajlar Mesajlar sekmesinde görünür ve kaybolmaz.']],
+    'E-posta bildirimi için ücretsiz bir Resend hesabı gerekir; Telegram daha kolaydır (yukarıdaki soruya bakın). Kurulana kadar tüm mesajlar Mesajlar sekmesinde görünür ve kaybolmaz.']],
   ['Parolamı unuttum.', [
     'Panelden sıfırlanamaz (güvenlik için). Geliştiricinize ya da Claude\'a yazın; yeni parola oluşturulur.']],
 ];

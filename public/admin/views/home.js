@@ -46,7 +46,7 @@ export function homeView() {
     { done: s.setup.password, text: 'Parolanızı değiştirin', note: 'İlk parola size başkası tarafından iletildi; kendi parolanızı seçin.', go: ['account', 'Parolayı değiştir'] },
     { done: s.setup.project, text: 'İlk videonuzu ekleyin', note: 'YouTube bağlantısını yapıştırmanız yeterli.', go: ['projects', 'Video ekle'] },
     { done: s.setup.portrait, text: 'Portre fotoğrafınızı yükleyin', note: 'Yüklemezseniz sitede kamera maskotu görünür.', go: ['site', 'Site içeriğine git'] },
-    { done: s.setup.mail, text: 'Mesajların e-postanıza da gelmesini kurun', note: 'Kurulana kadar mesajlar yalnızca bu panelde görünür.' },
+    { done: s.setup.mail, text: 'Mesajların telefonunuza bildirim olarak gelmesini kurun', note: 'Telegram ile ücretsiz ve kartsız; Hesap sekmesindeki "Sık sorulanlar" bölümünde adımlar var. Kurulana kadar mesajlar yalnızca bu panelde görünür.', go: ['account', 'Adımlara git'] },
   ];
   const pending = todo.filter((t) => !t.done);
 

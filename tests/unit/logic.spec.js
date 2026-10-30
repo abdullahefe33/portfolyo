@@ -118,3 +118,37 @@ test.describe('içerik temizleme', () => {
     expect(esc('<img src=x onerror="a()">&\'')).toBe('&lt;img src=x onerror=&quot;a()&quot;&gt;&amp;&#39;');
   });
 });
+
+test.describe('Telegram bildirimi', () => {
+  const real = globalThis.fetch;
+  test.afterEach(() => { globalThis.fetch = real; });
+  const env = { TELEGRAM_BOT_TOKEN: `123456789:${'A'.repeat(35)}`, TELEGRAM_CHAT_ID: '987654321' };
+  const msg = { name: 'Ali\nVeli', email: 'ali@example.com', phone: '0555', subject: 'Klip', body: '<b>Merhaba</b> '.repeat(100) };
+
+  test('ayar yoksa ya da biçim geçersizse hiç istek atmaz', async () => {
+    const { notifyTelegram } = await import('../../lib/notify.js');
+    let calls = 0;
+    globalThis.fetch = async () => { calls += 1; return new Response('{}'); };
+    expect(await notifyTelegram({}, msg)).toBe(false);
+    expect(await notifyTelegram({ TELEGRAM_BOT_TOKEN: '123456789:../../x', TELEGRAM_CHAT_ID: '1' }, msg)).toBe(false); // adres enjeksiyonu
+    expect(await notifyTelegram({ ...env, TELEGRAM_CHAT_ID: '@kanal; drop' }, msg)).toBe(false);
+    expect(calls).toBe(0);
+  });
+  test('düz metin gönderir: biçimlendirme yok, ad tek satır, gövde kısaltılmış', async () => {
+    const { notifyTelegram } = await import('../../lib/notify.js');
+    let seen;
+    globalThis.fetch = async (url, init) => { seen = { url, body: JSON.parse(init.body) }; return new Response('{}', { status: 200 }); };
+    expect(await notifyTelegram(env, msg, 'https://site.pages.dev')).toBe(true);
+    expect(seen.url).toBe(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`);
+    expect(seen.body.parse_mode).toBeUndefined();
+    expect(seen.body.chat_id).toBe('987654321');
+    expect(seen.body.text).toContain('Yeni mesaj: Ali Veli');
+    expect(seen.body.text).toContain('Panel: https://site.pages.dev/admin/');
+    expect(seen.body.text.length).toBeLessThan(1200);
+  });
+  test('Telegram hata dönerse başarısız sayılır', async () => {
+    const { notifyTelegram } = await import('../../lib/notify.js');
+    globalThis.fetch = async () => new Response('{}', { status: 400 });
+    expect(await notifyTelegram(env, msg)).toBe(false);
+  });
+});
