@@ -1,7 +1,7 @@
 # Mehmet Abdullah Bardakçı: Portfolyo Sitesi
 
 Cloudflare Pages (statik dosyalar + Pages Functions) ve D1 (veritabanı) üzerinde çalışır. Videolar YouTube/Vimeo'da durur (ücretsiz), kapak görselleri küçültülüp veritabanında saklanır. R2 isteğe bağlıdır.
-Sunucu tarafında üretilen sayfa (yazı tipleri: Bricolage Grotesque + Instrument Sans, kendi sunucumuzdan), yönetim paneli ve API tek projede; derleme adımı ve çalışma zamanı bağımlılığı yoktur.
+Sunucu tarafında üretilen sayfa (yazı tipleri: Just Another Hand (el yazısı başlıklar) + Instrument Sans, kendi sunucumuzdan), yönetim paneli ve API tek projede; derleme adımı ve çalışma zamanı bağımlılığı yoktur.
 
 ## Yerelde çalıştırma
 
@@ -10,7 +10,7 @@ npm install
 npm run db:local                       # D1 tablolarını oluşturur (yerel)
 npm run admin:set                      # yönetici hesabı oluşturur, rastgele parolayı bir kez yazdırır
 npm run dev                            # http://127.0.0.1:8788  (panel: /admin/)
-npm test                               # Playwright testleri (88 test)
+npm test                               # Playwright testleri (87 test)
 ```
 
 ## Cloudflare'e yayınlama (`.pages.dev`)
@@ -82,11 +82,10 @@ tests/e2e/   Playwright testleri
 .claude/     kurulu skill'ler: ui-ux-pro-max, frontend-ui-engineering
 ```
 
-## Tasarım ve illüstrasyonlar
+## Tasarım
 
-Çizimler `lib/art.js` içinde elle yazılmış SVG'lerdir (dron, klaket, makara, kamera maskotu, 8 hizmet ve 4 süreç ikonu, bulut, güneş, uçak).
-Renkler ve hareketleri `public/assets/art.css` yönetir; imleci izleyen göz, harf harf isim ve paralaks `public/assets/site.js` içindedir.
-Tüm hareketler `prefers-reduced-motion` tercihine uyar, ekran dışındaki çizimler duraklar. Paylaşım önizleme görseli `scripts/make-og.mjs` ile üretilir (`public/og.jpg`).
+Koyu, sade ve editoryal bir tasarım: iri el yazısı başlık (panelden değişir), altına çekilen fırça çizgisi, numaralı hizmet listesi, gri tonlu geniş sinematik ana video şeridi ve üzerine gelince renklenen proje kartları.
+Çizgi süsler (`lib/art.js`) tek renk SVG'dir; tüm stil ve hareketler `public/assets/site.css` içindedir. Hareketler `prefers-reduced-motion` tercihine uyar. Paylaşım önizleme görseli ve simgeler `scripts/make-og.mjs` ile üretilir.
 
 ## Bildirimler ve telefonda kullanım
 

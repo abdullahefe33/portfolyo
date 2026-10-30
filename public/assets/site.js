@@ -1,7 +1,7 @@
 (() => {
   'use strict';
+  document.documentElement.classList.add('js');
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const BENTO = ['s7', 's5', 's4', 's4', 's4'];
 
   // ---- Menü ----
   const toggle = document.querySelector('.nav-toggle');
@@ -124,22 +124,14 @@
     if (card) beacon('play', card.dataset.id);
   });
 
-  // ---- Çalışma filtresi (mozaik düzeni görünen kartlara göre yeniden kurulur) ----
+  // ---- Çalışma filtresi ----
   const chips = document.querySelectorAll('.chip[data-filter]');
   const items = [...document.querySelectorAll('.reel-item')];
-  const layout = () => {
-    let n = 0;
-    items.forEach((li) => {
-      BENTO.forEach((c) => li.classList.remove(c));
-      if (!li.hidden) li.classList.add(BENTO[n++ % BENTO.length]);
-    });
-  };
   chips.forEach((chip) =>
     chip.addEventListener('click', () => {
       const f = chip.dataset.filter;
       chips.forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
       items.forEach((li) => { li.hidden = f !== 'all' && li.dataset.category !== f; });
-      layout();
     }),
   );
 
@@ -192,16 +184,7 @@
     });
   }
 
-  // ---- Çizimler ve hareket ----
-  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-
-  // Ekran dışındaki çizimler ve bulutlar durur (pil ve işlemci tasarrufu)
-  if ('IntersectionObserver' in window) {
-    const live = new IntersectionObserver((entries) => entries.forEach((en) => en.target.classList.toggle('is-on', en.isIntersecting)), { rootMargin: '160px' });
-    document.querySelectorAll('.art, .cloud').forEach((el) => live.observe(el));
-  }
-
-  // Başlıkların altındaki el yazısı çizgi, başlık görününce çizilir
+  // ---- Başlık altı el yazısı çizgi: başlık görününce çizilir ----
   const heads = document.querySelectorAll('.section h2');
   if ('IntersectionObserver' in window) {
     const seen = new IntersectionObserver((entries) => entries.forEach((en) => {
@@ -210,56 +193,6 @@
     heads.forEach((h2) => seen.observe(h2));
   } else {
     heads.forEach((h2) => h2.classList.add('in'));
-  }
-
-  // İsim harf harf belirir (ekran okuyucu için tam isim aria-label'da)
-  const heroName = document.querySelector('.hero-name');
-  if (heroName && !reduceMotion) {
-    let n = 0;
-    const full = heroName.textContent.trim().replace(/\s+/g, ' ');
-    heroName.querySelectorAll(':scope > span').forEach((word) => {
-      const text = word.textContent;
-      word.textContent = '';
-      word.setAttribute('aria-hidden', 'true');
-      [...text].forEach((ch) => {
-        const i = document.createElement('i');
-        i.textContent = ch;
-        i.style.setProperty('--i', String(n++));
-        word.append(i);
-      });
-    });
-    heroName.setAttribute('aria-label', full);
-    heroName.classList.add('is-split');
-  }
-
-  // Fare hareketiyle dron ve klaket hafifçe kayar
-  const hero = document.querySelector('[data-hero]');
-  if (hero && finePointer && !reduceMotion) {
-    hero.addEventListener('pointermove', (e) => {
-      const r = hero.getBoundingClientRect();
-      hero.style.setProperty('--mx', (((e.clientX - r.left) / r.width) - 0.5).toFixed(3) * 2);
-      hero.style.setProperty('--my', (((e.clientY - r.top) / r.height) - 0.5).toFixed(3) * 2);
-    });
-    hero.addEventListener('pointerleave', () => { hero.style.setProperty('--mx', 0); hero.style.setProperty('--my', 0); });
-  }
-
-  // Kamera maskotunun gözü imleci izler
-  const mascot = document.querySelector('.art-mascot');
-  if (mascot && finePointer && !reduceMotion) {
-    let raf = 0;
-    window.addEventListener('pointermove', (e) => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        const r = mascot.getBoundingClientRect();
-        const dx = e.clientX - (r.left + r.width * (156 / 320));
-        const dy = e.clientY - (r.top + r.height * (164 / 310));
-        const d = Math.hypot(dx, dy) || 1;
-        const k = Math.min(d, 260) / 260;
-        mascot.style.setProperty('--ex', ((dx / d) * k * 20).toFixed(1));
-        mascot.style.setProperty('--ey', ((dy / d) * k * 20).toFixed(1));
-      });
-    }, { passive: true });
   }
 
   // ---- İletişim formu: her alanın altında hata, üstte bağlantılı özet ----

@@ -3,28 +3,29 @@
 import { chromium } from '@playwright/test';
 
 const base = process.argv[2] || 'http://127.0.0.1:8788';
-const html = `<!doctype html><meta charset="utf-8"><style>
-@font-face{font-family:B;font-weight:200 800;src:url(${base}/assets/fonts/bricolage-grotesque-latin-wght-normal.woff2)}
-@font-face{font-family:B;font-weight:200 800;src:url(${base}/assets/fonts/bricolage-grotesque-latin-ext-wght-normal.woff2);unicode-range:U+0100-02BA,U+1E00-1EFF}
+const html = `<!doctype html><html lang="tr"><meta charset="utf-8"><style>
+@font-face{font-family:H;src:url(${base}/assets/fonts/just-another-hand-latin-400-normal.woff2)}
+@font-face{font-family:H;src:url(${base}/assets/fonts/just-another-hand-latin-ext-400-normal.woff2);unicode-range:U+0100-02BA,U+1E00-1EFF}
 @font-face{font-family:I;font-weight:400 700;src:url(${base}/assets/fonts/instrument-sans-latin-wght-normal.woff2)}
-*{box-sizing:border-box}body{margin:0;width:1200px;height:630px;background:#f5f6f8;font-family:I,sans-serif;color:#0f1115;position:relative;overflow:hidden}
-h1{position:absolute;left:72px;top:72px;margin:0;font:800 118px/0.92 B,sans-serif;letter-spacing:-0.045em}
-p{position:absolute;left:76px;bottom:70px;margin:0;font:700 34px/1.2 B,sans-serif;letter-spacing:-0.02em;max-width:560px}
-.tile{position:absolute;right:72px;top:72px;width:430px;height:486px;border-radius:40px;background:linear-gradient(180deg,#ffd23f 0%,#ff6a4d 46%,#3b4bff 100%);overflow:hidden}
-.sun{position:absolute;left:50%;top:20%;width:34%;aspect-ratio:1;translate:-50% 0;border-radius:50%;background:#fff6d6}
-.hills{position:absolute;inset:auto 0 0 0;height:38%;background:#0f1115;clip-path:polygon(0 100%,0 52%,18% 24%,34% 54%,52% 6%,70% 48%,84% 22%,100% 50%,100% 100%)}
-.play{position:absolute;left:50%;top:50%;translate:-50% -50%;width:96px;height:96px;border-radius:50%;background:#fff;display:grid;place-items:center}
-.play i{border-left:30px solid #0f1115;border-top:19px solid transparent;border-bottom:19px solid transparent;margin-left:8px}
-.age{position:absolute;right:48px;bottom:34px;width:150px;height:150px;border-radius:50%;background:#19c48e;display:grid;place-items:center;text-align:center;box-shadow:0 0 0 8px #f5f6f8;font:800 40px/1 B;letter-spacing:-0.03em}
-.age small{display:block;font:600 17px/1.15 I;letter-spacing:0;margin-top:4px;padding:0 18px}
-.dot{position:absolute;right:40px;top:40px;width:124px;height:124px;border-radius:50%;background:#ffd23f;box-shadow:0 0 0 8px #f5f6f8}
+*{box-sizing:border-box}body{margin:0;width:1200px;height:630px;background:#0a0a0b;font-family:I,sans-serif;color:#f5f4f0;position:relative;overflow:hidden}
+.n{position:absolute;left:72px;top:60px;font:400 56px/1 H;transform:skewX(-6deg)}
+h1{position:absolute;left:72px;top:128px;margin:0;font:400 150px/0.86 H;text-transform:uppercase;transform:skewX(-7deg);transform-origin:left bottom}
+p{position:absolute;left:76px;top:540px;margin:0;font:600 30px/1.2 I;color:#a6a6ad}
+.s{position:absolute;left:72px;top:470px;width:420px;height:44px}
+.dot{position:absolute;right:72px;top:64px;display:flex;align-items:center;gap:12px;border:2px solid rgba(255,255,255,.4);border-radius:99px;padding:10px 22px 10px 18px;font:500 26px I}
+.dot i{width:16px;height:16px;border-radius:50%;background:#ffd23f}
+.lens{position:absolute;right:72px;bottom:56px;width:300px;height:300px;color:rgba(255,255,255,.55)}
 </style>
-<h1>Mehmet<br>Abdullah<br>Bardakçı</h1><p>Kameraman, kurgucu ve drone operatörü</p>
-<div class="tile"><div class="sun"></div><div class="hills"></div><div class="play"><i></i></div></div><div class="dot"></div><div class="age"><span>Video<small>çekim ve kurgu</small></span></div>`;
+<div class="n">Mehmet Abdullah Bardakçı</div><h1>Fikir.<br>Kadraj.<br>Hikâye.</h1>
+<svg class="s" viewBox="0 0 520 60"><path d="M6 38 C 90 14, 170 50, 260 30 S 430 16, 514 34" fill="none" stroke="#f5f4f0" stroke-width="4" stroke-linecap="round"/></svg>
+<p>Kameraman, kurgucu ve drone operatörü</p>
+<div class="dot"><i></i>Yeni projelere açığım</div>
+<svg class="lens" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><circle cx="100" cy="100" r="86"/><circle cx="100" cy="100" r="52"/><circle cx="100" cy="100" r="18"/><path d="M100 14 L128 62 M186 100 L136 128 M100 186 L72 138 M14 100 L64 72 M154 36 L128 62 M154 164 L136 128 M46 164 L72 138 M46 36 L64 72"/><circle cx="140" cy="60" r="5" fill="#ffd23f" stroke="none"/></svg>`;
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
 await page.setContent(html);
+await page.evaluate(() => Promise.all([document.fonts.load('150px H', 'İÂâ'), document.fonts.load('56px H', 'çıı'), document.fonts.load('600 30px I', 'ığç')]));
 await page.evaluate(() => document.fonts.ready);
 await page.waitForTimeout(400);
 await page.screenshot({ path: new URL('../public/og.jpg', import.meta.url).pathname, type: 'jpeg', quality: 86 });

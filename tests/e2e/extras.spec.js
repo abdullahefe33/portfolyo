@@ -26,7 +26,7 @@ test.describe('404, simge, WhatsApp, canlı önizleme, yanıt notu', () => {
   test('WhatsApp bağlantıları hazır mesajla açılır', async ({ page }) => {
     await page.goto('/');
     const links = page.locator('a[href^="https://wa.me/905467245302"]');
-    await expect(links).toHaveCount(2); // iletişim bölümü + mobil çubuk
+    await expect(links).toHaveCount(3); // iletişim bölümü + alt bilgi + mobil çubuk
     for (const a of await links.all()) await expect(a).toHaveAttribute('href', /\?text=Merhaba%2C%20web%20sitenizden%20yaz%C4%B1yorum\.$/);
   });
 
@@ -47,12 +47,11 @@ test.describe('404, simge, WhatsApp, canlı önizleme, yanıt notu', () => {
     }
   });
 
-  test('köşe mührü: yazı panelden değişir, boşsa görünmez; yaş rozeti yok', async ({ page, request }) => {
+  test('durum etiketi: yazı panelden değişir, boşsa görünmez; yaş rozeti yok', async ({ page, request }) => {
     const { csrf } = await apiLogin(request);
     const h = { origin: ORIGIN, 'x-csrf-token': csrf };
     await page.goto('/');
-    await expect(page.locator('.stamp')).toBeVisible();
-    await expect(page.locator('.stamp .sr-only')).toHaveText('Yeni projelere açığım');
+    await expect(page.locator('.status')).toHaveText('Yeni projelere açığım');
     await expect(page.locator('.age-badge')).toHaveCount(0);
     await expect(page.locator('[data-age]')).toHaveCount(1); // yaş yalnızca Hakkımda'da
 
@@ -61,11 +60,11 @@ test.describe('404, simge, WhatsApp, canlı önizleme, yanıt notu', () => {
       site.hero.badge = 'Haziran için müsaitim <b>x</b>';
       expect((await request.put('/api/admin/site', { headers: h, data: site })).status()).toBe(200);
       await page.reload();
-      await expect(page.locator('.stamp .sr-only')).toHaveText('Haziran için müsaitim <b>x</b>'); // HTML çalışmaz
+      await expect(page.locator('.status')).toHaveText('Haziran için müsaitim <b>x</b>'); // HTML çalışmaz
       site.hero.badge = '';
       await request.put('/api/admin/site', { headers: h, data: site });
       await page.reload();
-      await expect(page.locator('.stamp')).toHaveCount(0);
+      await expect(page.locator('.status')).toHaveCount(0);
     } finally {
       site.hero.badge = 'Yeni projelere açığım';
       await request.put('/api/admin/site', { headers: h, data: site });

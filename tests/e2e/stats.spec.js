@@ -15,7 +15,8 @@ test.describe('İstatistikler ve Genel bakış', () => {
     await apiLogin(request);
     const human = `ziyaretci${uid()}`;
     const bot = `robot${uid()}`;
-    await request.get(`/?utm_source=${human}`, { headers: { 'user-agent': HUMAN_UA } });
+    // Birkaç kez: listede yalnızca ilk 8 kaynak gösterilir, eski test verileriyle eşitlik olmasın
+    for (let i = 0; i < 4; i++) await request.get(`/?utm_source=${human}`, { headers: { 'user-agent': HUMAN_UA } });
     await request.get(`/?utm_source=${bot}`, { headers: { 'user-agent': 'Googlebot/2.1 (+http://www.google.com/bot.html)' } });
     await request.get(`/?utm_source=${bot}x`, { headers: { 'user-agent': 'WhatsApp/2.23 A' } });
     await expect.poll(async () => (await adminStats(request)).refs.map((r) => r.label), { timeout: 10000 }).toContain(human);

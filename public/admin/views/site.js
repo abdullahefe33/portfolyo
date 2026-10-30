@@ -6,11 +6,12 @@ const GROUPS = [
   { id: 'hero', title: 'Açılış (sayfanın en üstü)', hint: 'İsminiz, unvanlarınız, ana butonlar', parts: [
     { path: 'hero', fields: [
       { k: 'title', label: 'Ad soyad (büyük başlık)' },
+      { k: 'headline', label: 'Büyük el yazısı başlık', help: 'Sayfanın en üstündeki iri yazı. Kısa tutun, örn: Fikir. Kadraj. Hikâye.' },
       { k: 'roles', label: 'Unvanlar', help: 'Örn: Kameraman, kurgucu ve drone operatörü' },
       { k: 'tagline', label: 'Kısa tanıtım cümlesi', type: 'textarea' },
       { k: 'cta_primary', label: 'Birinci buton yazısı' },
       { k: 'cta_secondary', label: 'İkinci buton yazısı' },
-      { k: 'badge', label: 'Köşedeki dönen mühür yazısı (boşsa görünmez)', help: 'Örn: Yeni projelere açığım' },
+      { k: 'badge', label: 'Durum etiketi (başlığın üstünde, boşsa görünmez)', help: 'Örn: Yeni projelere açığım' },
       { k: 'showreel_project_id', label: 'Açılıştaki ana video', type: 'project', help: 'Çalışmalar sekmesinden "Ana video yap" ile de seçebilirsiniz.' },
     ] },
   ] },
