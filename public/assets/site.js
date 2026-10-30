@@ -161,8 +161,8 @@
 
   // Ekran dışındaki çizimler ve bulutlar durur (pil ve işlemci tasarrufu)
   if ('IntersectionObserver' in window) {
-    const off = new IntersectionObserver((entries) => entries.forEach((en) => en.target.classList.toggle('is-off', !en.isIntersecting)), { rootMargin: '160px' });
-    document.querySelectorAll('.art, .cloud').forEach((el) => off.observe(el));
+    const live = new IntersectionObserver((entries) => entries.forEach((en) => en.target.classList.toggle('is-on', en.isIntersecting)), { rootMargin: '160px' });
+    document.querySelectorAll('.art, .cloud').forEach((el) => live.observe(el));
   }
 
   // Başlıkların altındaki el yazısı çizgi, başlık görününce çizilir

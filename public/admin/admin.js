@@ -38,7 +38,7 @@ function showLogin(notice = '') {
       btn.disabled = false;
     }
   });
-  app.replaceChildren(form);
+  app.replaceChildren(h('main', {}, form));
   form.username.focus();
 }
 
@@ -79,7 +79,7 @@ function shell(content) {
       onclick: () => switchTab(id),
     }, icon(ico, 22), h('span', { class: 'tab-label' }, label), id === 'messages' && unread ? h('span', { class: 'count', 'aria-label': `${unread} okunmamış` }, unread) : null)));
   app.removeAttribute('aria-busy');
-  app.replaceChildren(h('div', { class: 'shell' },
+  app.replaceChildren(h('main', { class: 'shell' },
     h('header', { class: 'top' },
       h('h1', {}, 'Yönetim paneli'),
       h('div', { class: 'top-actions' },

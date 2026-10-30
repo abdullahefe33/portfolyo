@@ -79,7 +79,7 @@ test.describe('Panel kolaylıkları', () => {
     await page.locator('.project', { hasText: a.title }).getByRole('button', { name: 'Ana video yap' }).click();
     await expect(page.locator('.project', { hasText: a.title }).locator('.badge-star')).toBeVisible();
     await pub.reload();
-    await expect(pub.locator('.hero-reel')).toHaveAttribute('aria-label', `Ana video: ${a.title}`);
+    await expect(pub.locator('.hero-reel')).toHaveAttribute('data-title', a.title);
 
     await removeProject(request, csrf, a.id);
     await removeProject(request, csrf, b.id);

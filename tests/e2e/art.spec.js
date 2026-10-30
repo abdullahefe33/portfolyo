@@ -51,9 +51,10 @@ test.describe('İllüstrasyonlar ve hareket', () => {
 
   test('ekran dışındaki çizimler duraklar', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('.art-mascot')).toHaveClass(/is-off/); // sayfanın aşağısında
+    await expect(page.locator('.art-mascot')).not.toHaveClass(/is-on/); // sayfanın aşağısında: duraklı
+    await expect(page.locator('.art-drone')).toHaveClass(/is-on/); // ekranda: oynuyor
     await page.locator('.art-mascot').scrollIntoViewIfNeeded();
-    await expect(page.locator('.art-mascot')).not.toHaveClass(/is-off/);
+    await expect(page.locator('.art-mascot')).toHaveClass(/is-on/);
   });
 
   test('hareket azaltma tercihi: harf animasyonu yok, çizimler durağan', async ({ browser }) => {

@@ -217,8 +217,11 @@ body { background-image: radial-gradient(rgba(15, 17, 21, 0.1) 1.3px, transparen
 @keyframes strip { to { background-position: 30px 0; } }
 
 /* Ekran dışındaki çizimler duraklar (pil ve işlemci tasarrufu) */
-.art.is-off, .art.is-off * { animation-play-state: paused !important; }
-.cloud.is-off, .sp.is-off { animation-play-state: paused; }
+/* SVG alt öğelerinin dönüşümleri ana iş parçacığında çizilir: yalnızca ekrandayken oynat */
+.art, .art * { animation-play-state: paused; }
+.art.is-on, .art.is-on * { animation-play-state: running; }
+.cloud { animation-play-state: paused; }
+.cloud.is-on { animation-play-state: running; }
 
 @media (prefers-reduced-motion: reduce) {
   .filmstrip::before, .cloud, .mascot-cloud { animation: none !important; }
