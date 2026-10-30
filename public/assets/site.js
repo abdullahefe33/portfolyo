@@ -43,6 +43,42 @@
     }).observe(heroVideo);
   }
 
+  // ---- Açılıştaki ana video: YouTube/Vimeo ise sessiz, döngülü canlı önizleme (geniş ekran, hareket tercihi varsa) ----
+  const heroReel = document.querySelector('.hero-reel[data-embed]');
+  const saveData = navigator.connection && navigator.connection.saveData;
+  if (heroReel && !reduceMotion && !saveData && window.matchMedia('(min-width: 60rem)').matches) {
+    const previewSrc = (embed) => {
+      try {
+        const u = new URL(embed);
+        const id = u.pathname.split('/').filter(Boolean).pop();
+        if (u.hostname === 'www.youtube-nocookie.com') {
+          return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&controls=0&loop=1&playlist=${id}&playsinline=1&modestbranding=1&rel=0&disablekb=1&iv_load_policy=3`;
+        }
+        if (u.hostname === 'player.vimeo.com') {
+          const h = u.searchParams.get('h');
+          return `https://player.vimeo.com/video/${id}?${h ? `h=${h}&` : ''}background=1&autoplay=1&muted=1&loop=1`;
+        }
+      } catch { /* geçersiz adres: önizleme yok */ }
+      return '';
+    };
+    const startPreview = () => {
+      const src = previewSrc(heroReel.dataset.embed);
+      if (!src) return;
+      const frame = document.createElement('iframe');
+      frame.className = 'hero-embed';
+      frame.src = src;
+      frame.title = '';
+      frame.tabIndex = -1;
+      frame.setAttribute('aria-hidden', 'true');
+      frame.allow = 'autoplay; encrypted-media';
+      frame.referrerPolicy = 'strict-origin-when-cross-origin';
+      frame.addEventListener('load', () => setTimeout(() => frame.classList.add('is-ready'), 1500));
+      heroReel.prepend(frame);
+    };
+    if ('requestIdleCallback' in window) requestIdleCallback(startPreview, { timeout: 3500 });
+    else setTimeout(startPreview, 1800);
+  }
+
   // ---- Kart üzerine gelince sessiz önizleme (yalnızca fare olan cihazlarda) ----
   if (!reduceMotion && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
     document.querySelectorAll('.reel-item .reel').forEach((card) => {

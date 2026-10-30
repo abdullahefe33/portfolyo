@@ -232,3 +232,18 @@ body { background-image: radial-gradient(rgba(15, 17, 21, 0.1) 1.3px, transparen
 @media (max-width: 59.99rem) {
   .cl1, .cl2, .sp1, .sp3 { display: none; }
 }
+
+/* Açılıştaki ana videonun canlı önizlemesi (4:5 kartı 16:9 video ile doldurur) */
+.hero-embed { position: absolute; top: 0; left: 50%; z-index: -1; height: 100%; width: auto; aspect-ratio: 16 / 9; transform: translateX(-50%); border: 0; pointer-events: none; opacity: 0; transition: opacity 0.9s ease; }
+.hero-embed.is-ready { opacity: 1; }
+
+/* ---------- 404 sayfası ---------- */
+.lost { position: relative; min-height: 100svh; display: grid; align-content: center; justify-items: center; gap: var(--s4); padding: var(--s7) var(--gutter); text-align: center; overflow: hidden; }
+.lost h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.4rem, 7vw, 5rem); line-height: 0.95; letter-spacing: -0.04em; max-width: 14ch; }
+.lost p { color: var(--mute); max-width: 36ch; }
+.lost-drone { width: clamp(11rem, 28vw, 17rem); margin-bottom: var(--s3); }
+.lost-cloud { position: absolute; width: clamp(6rem, 12vw, 10rem); }
+.lost-cloud.l1 { top: 14%; left: 0; animation: drift 70s linear infinite -20s; }
+.lost-cloud.l2 { top: 62%; left: 0; animation: drift 95s linear infinite -60s; }
+.lost-spark { position: absolute; top: 20%; right: 22%; }
+.lost-cloud, .lost-cloud.is-on { animation-play-state: running; }

@@ -4,7 +4,7 @@ export const E2E_USER = 'e2e';
 export const E2E_PASS = 'E2e-Test-Parola-1';
 
 export default defineConfig({
-  testDir: './tests/e2e',
+  testDir: './tests',
   fullyParallel: false,
   workers: 1,
   retries: 0,

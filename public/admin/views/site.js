@@ -44,6 +44,7 @@ const GROUPS = [
       { k: 'text', label: 'Açıklama', type: 'textarea' },
       { k: 'phone', label: 'Telefon', help: 'Örn: 0546 724 53 02' },
       { k: 'instagram', label: 'Instagram kullanıcı adı', help: '@ işareti olmadan yazın.' },
+      { k: 'response', label: 'Yanıt süresi notu (isteğe bağlı)', help: 'Formun altında görünür. Örn: Genellikle bir iş günü içinde dönüş yaparım. Boş bırakırsanız görünmez.' },
     ] },
   ] },
   { id: 'seo', title: 'Google ve paylaşım görünümü', hint: 'Arama sonuçlarında ve WhatsApp önizlemesinde görünen yazı', parts: [

@@ -57,6 +57,7 @@ export const onRequestPost = handler(async ({ request, env }) => {
     const parsed = parseVideoUrl(body.video_url);
     if (!parsed) throw new HttpError(400, 'Geçerli bir YouTube veya Vimeo bağlantısı yazın.');
     const info = await fetchOembed(parsed);
+    if (info && info.blocked) throw new HttpError(400, 'Bu videoya erişilemiyor (özel, silinmiş ya da gömmeye kapalı). "Liste dışı" yapıp tekrar deneyin.');
     link = { ...parsed, thumb: (info && info.thumbnail) || fallbackThumb(parsed) };
   } else {
     requireMedia(env);

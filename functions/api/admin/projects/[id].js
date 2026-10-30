@@ -38,6 +38,7 @@ export const onRequestPut = handler(async ({ request, env, params }) => {
     const parsed = parseVideoUrl(body.video_url);
     if (!parsed) throw new HttpError(400, 'Geçerli bir YouTube veya Vimeo bağlantısı yazın.');
     const info = await fetchOembed(parsed);
+    if (info && info.blocked) throw new HttpError(400, 'Bu videoya erişilemiyor (özel, silinmiş ya da gömmeye kapalı). "Liste dışı" yapıp tekrar deneyin.');
     Object.assign(fields, {
       provider: parsed.provider, provider_id: parsed.id, provider_hash: parsed.hash,
       thumb_url: (info && info.thumbnail) || fallbackThumb(parsed),

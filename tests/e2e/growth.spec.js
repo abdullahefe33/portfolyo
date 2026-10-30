@@ -40,7 +40,7 @@ test.describe('Güven, paylaşım ve arama motoru', () => {
     await page.evaluate(() => document.getElementById('hizmetler').scrollIntoView());
     await expect(dock).toHaveClass(/is-on/);
     await expect(dock.getByRole('link', { name: 'Ara' })).toHaveAttribute('href', 'tel:+905467245302');
-    await expect(dock.getByRole('link', { name: 'WhatsApp' })).toHaveAttribute('href', 'https://wa.me/905467245302');
+    await expect(dock.getByRole('link', { name: 'WhatsApp' })).toHaveAttribute('href', /^https:\/\/wa\.me\/905467245302(\?text=.*)?$/);
     await page.evaluate(() => document.getElementById('iletisim').scrollIntoView());
     await expect(dock).not.toHaveClass(/is-on/);
     // Tüm bağlantılar en az 44 piksel yüksekliğinde

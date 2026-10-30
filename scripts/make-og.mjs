@@ -28,5 +28,9 @@ await page.setContent(html);
 await page.evaluate(() => document.fonts.ready);
 await page.waitForTimeout(400);
 await page.screenshot({ path: new URL('../public/og.jpg', import.meta.url).pathname, type: 'jpeg', quality: 86 });
+// Ana ekran simgesi (180x180)
+const icon = await browser.newPage({ viewport: { width: 180, height: 180 } });
+await icon.setContent(`<body style="margin:0">${(await import('node:fs')).readFileSync(new URL('../public/favicon.svg', import.meta.url), 'utf8').replace('<svg ', '<svg width="180" height="180" ')}</body>`);
+await icon.screenshot({ path: new URL('../public/apple-touch-icon.png', import.meta.url).pathname });
 await browser.close();
-console.log('public/og.jpg hazır');
+console.log('public/og.jpg ve public/apple-touch-icon.png hazır');
