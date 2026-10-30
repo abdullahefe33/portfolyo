@@ -9,8 +9,8 @@ MAX_VIDEO_MB = "500"
 [[d1_databases]]
 binding = "DB"
 database_name = "portfolio-db"
-# Deploy öncesi `wrangler d1 create portfolio-db` çıktısındaki gerçek ID ile değiştirilecek.
-database_id = "00000000-0000-0000-0000-000000000000"
+# Cloudflare üzerinde oluşturulan canlı veritabanının kimliği.
+database_id = "9508aa0a-1381-481d-89a3-ae9bf06e897d"
 migrations_dir = "migrations"
 
 [[r2_buckets]]
