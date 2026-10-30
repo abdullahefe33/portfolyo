@@ -260,6 +260,7 @@ function uploadCard() {
   const posterInput = h('input', { id: 'v-poster', type: 'file', accept: 'image/jpeg,image/png,image/webp' });
   const title = h('input', { id: 'v-title', type: 'text', maxlength: '120', required: true });
   const desc = h('textarea', { id: 'v-desc', maxlength: '1000' });
+  const role = h('input', { id: 'v-role', type: 'text', maxlength: '120', placeholder: 'Çekim, kurgu, renk düzenleme' });
   const cat = categorySelect('v-cat', 'reklam');
   const published = h('input', { id: 'v-pub', type: 'checkbox', checked: true });
 
@@ -318,6 +319,7 @@ function uploadCard() {
     h('div', { class: 'row2' },
       h('div', { class: 'field' }, h('label', { for: 'v-title' }, 'Başlık'), title),
       h('div', { class: 'field' }, h('label', { for: 'v-cat' }, 'Kategori'), cat)),
+    h('div', { class: 'field' }, h('label', { for: 'v-role' }, 'Bu projedeki rolüm (isteğe bağlı)'), role),
     h('div', { class: 'field' }, h('label', { for: 'v-desc' }, 'Açıklama (isteğe bağlı)'), desc),
     h('div', { class: 'field' }, h('label', { for: 'v-poster' }, 'Kendi kapak görselim (isteğe bağlı; yoksa videonun küçük resmi kullanılır)'), posterInput, preview),
     h('label', { class: 'check', for: 'v-pub' }, published, 'Sitede yayınla'),
@@ -329,7 +331,7 @@ function uploadCard() {
     e.preventDefault();
     const btn = form.querySelector('button[type="submit"]');
     if (!title.value.trim()) { setMsg(msg, 'error', 'Lütfen bir başlık yazın.'); title.focus(); return; }
-    const base = { title: title.value, description: desc.value, category: cat.value, published: published.checked };
+    const base = { title: title.value, description: desc.value, role: role.value, category: cat.value, published: published.checked };
     try {
       if (mode === 'link') {
         if (!urlInput.value.trim()) { setMsg(msg, 'error', 'Lütfen bir YouTube veya Vimeo bağlantısı yapıştırın.'); urlInput.focus(); return; }
@@ -409,12 +411,14 @@ function editForm(p) {
   const title = h('input', { type: 'text', id: `e-title-${p.id}`, value: p.title, maxlength: '120', required: true });
   const desc = h('textarea', { id: `e-desc-${p.id}`, maxlength: '1000', value: p.description });
   const cat = categorySelect(`e-cat-${p.id}`, p.category);
+  const role = h('input', { type: 'text', id: `e-role-${p.id}`, value: p.role || '', maxlength: '120', placeholder: 'Çekim, kurgu, renk düzenleme' });
   const pub = h('input', { type: 'checkbox', id: `e-pub-${p.id}`, checked: Boolean(p.published) });
   const poster = h('input', { type: 'file', id: `e-poster-${p.id}`, accept: 'image/jpeg,image/png,image/webp' });
   const form = h('form', { class: 'edit stack', novalidate: true },
     h('div', { class: 'row2' },
       h('div', { class: 'field' }, h('label', { for: title.id }, 'Başlık'), title),
       h('div', { class: 'field' }, h('label', { for: cat.id }, 'Kategori'), cat)),
+    h('div', { class: 'field' }, h('label', { for: role.id }, 'Bu projedeki rolüm'), role),
     h('div', { class: 'field' }, h('label', { for: desc.id }, 'Açıklama'), desc),
     h('div', { class: 'field' }, h('label', { for: poster.id }, 'Kapak görselini değiştir (isteğe bağlı)'), poster),
     h('label', { class: 'check', for: pub.id }, pub, 'Sitede yayınla'),
@@ -427,7 +431,7 @@ function editForm(p) {
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true;
     try {
-      const body = { title: title.value, description: desc.value, category: cat.value, published: pub.checked };
+      const body = { title: title.value, description: desc.value, role: role.value, category: cat.value, published: pub.checked };
       if (poster.files[0]) body.poster_key = await uploadImage(poster.files[0], 'poster', 1280);
       await api(`/api/admin/projects/${p.id}`, { method: 'PUT', json: body });
       toast('Değişiklikler kaydedildi.');
@@ -463,6 +467,9 @@ const SITE_SPEC = [
     { k: 'photo', label: 'Portre fotoğrafı (isteğe bağlı)', type: 'image' },
   ] },
   { path: 'services', title: 'Hizmetler', type: 'repeat', max: 12, noun: 'hizmet', item: [{ k: 'title', label: 'Başlık' }, { k: 'text', label: 'Açıklama', type: 'textarea' }] },
+  { path: 'process', title: 'Nasıl çalışıyorum', fields: [{ k: 'heading', label: 'Bölüm başlığı' }] },
+  { path: 'process.steps', title: 'Çalışma adımları (boşaltırsanız bölüm gizlenir)', type: 'repeat', max: 8, noun: 'adım', item: [{ k: 'title', label: 'Başlık' }, { k: 'text', label: 'Açıklama', type: 'textarea' }] },
+  { path: 'testimonials', title: 'Müşteri yorumları (hiç yoksa bölüm sitede görünmez)', type: 'repeat', max: 12, noun: 'yorum', item: [{ k: 'quote', label: 'Yorum', type: 'textarea' }, { k: 'name', label: 'Kişi adı' }, { k: 'role', label: 'Unvan veya şirket (isteğe bağlı)' }] },
   { path: 'skills', title: 'Yetenekler', type: 'repeat', max: 12, noun: 'yetenek', item: [{ k: 'title', label: 'Yetenek adı' }] },
   { path: 'contact', title: 'İletişim', fields: [
     { k: 'heading', label: 'Bölüm başlığı' },
@@ -518,7 +525,7 @@ function siteField(obj, def) {
 function repeatSection(spec) {
   const box = h('div', {});
   const draw = () => {
-    const list = site[spec.path];
+    const list = spec.path.split('.').reduce((o, k) => o[k], site);
     box.replaceChildren(
       ...list.map((item, i) => h('div', { class: 'repeat-item' },
         spec.item.map((d) => siteField(item, d)),
@@ -526,7 +533,7 @@ function repeatSection(spec) {
           h('button', { class: 'btn btn-sm', type: 'button', 'aria-label': `${spec.noun} ${i + 1} yukarı`, disabled: i === 0, onclick: () => { [list[i - 1], list[i]] = [list[i], list[i - 1]]; draw(); } }, 'Yukarı'),
           h('button', { class: 'btn btn-sm', type: 'button', 'aria-label': `${spec.noun} ${i + 1} aşağı`, disabled: i === list.length - 1, onclick: () => { [list[i + 1], list[i]] = [list[i], list[i + 1]]; draw(); } }, 'Aşağı'),
           h('button', { class: 'btn btn-sm btn-danger', type: 'button', 'aria-label': `${spec.noun} ${i + 1} sil`, onclick: () => { list.splice(i, 1); draw(); } }, 'Sil')))),
-      h('div', { class: 'actions' }, h('button', { class: 'btn btn-sm', type: 'button', disabled: list.length >= spec.max, onclick: () => { list.push(spec.item.length > 1 ? { title: '', text: '' } : { title: '' }); draw(); } }, `Yeni ${spec.noun} ekle`)));
+      h('div', { class: 'actions' }, h('button', { class: 'btn btn-sm', type: 'button', disabled: list.length >= spec.max, onclick: () => { list.push(Object.fromEntries(spec.item.map((d) => [d.k, '']))); draw(); } }, `Yeni ${spec.noun} ekle`)));
   };
   draw();
   return box;
@@ -537,7 +544,7 @@ function siteView() {
   const form = h('form', { novalidate: true },
     SITE_SPEC.map((spec) => h('div', { class: 'card' },
       h('h2', { class: 'section-title' }, spec.title),
-      spec.type === 'repeat' ? repeatSection(spec) : h('div', { class: 'stack' }, spec.fields.map((d) => siteField(site[spec.path], d))))),
+      spec.type === 'repeat' ? repeatSection(spec) : h('div', { class: 'stack' }, spec.fields.map((d) => siteField(spec.path.split('.').reduce((o, k) => o[k], site), d))))),
     h('div', { class: 'sticky-save' }, h('button', { class: 'btn btn-primary', type: 'submit' }, 'Değişiklikleri kaydet'), msg));
   form.addEventListener('submit', async (e) => {
     e.preventDefault();

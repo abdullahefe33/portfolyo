@@ -56,6 +56,24 @@
     });
   }
 
+  // ---- Mobil hızlı iletişim çubuğu: açılış bölümü ve iletişim formu görünürken gizli kalır ----
+  const dock = document.querySelector('[data-dock]');
+  if (dock && 'IntersectionObserver' in window) {
+    const seen = new Set();
+    const update = () => dock.classList.toggle('is-on', seen.size === 0);
+    const watch = (el) => {
+      if (!el) return;
+      seen.add(el); // ilk durum: görünür kabul et, gözlemci düzeltir
+      new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) seen.add(el); else seen.delete(el);
+        update();
+      }, { threshold: 0.15 }).observe(el);
+    };
+    watch(document.getElementById('top'));
+    watch(document.getElementById('iletisim'));
+    update();
+  }
+
   // ---- Çalışma filtresi (mozaik düzeni görünen kartlara göre yeniden kurulur) ----
   const chips = document.querySelectorAll('.chip[data-filter]');
   const items = [...document.querySelectorAll('.reel-item')];
@@ -93,7 +111,7 @@
       btn.addEventListener('click', () => {
         opener = btn;
         title.textContent = btn.dataset.title;
-        desc.textContent = btn.dataset.desc || '';
+        desc.textContent = [btn.dataset.role ? `Rolüm: ${btn.dataset.role}.` : '', btn.dataset.desc || ''].filter(Boolean).join(' ');
         if (btn.dataset.embed) {
           video.hidden = true;
           const frame = document.createElement('iframe');

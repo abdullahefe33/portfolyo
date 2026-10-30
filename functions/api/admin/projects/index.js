@@ -4,7 +4,7 @@ import { IMAGE_KEY_RE, VIDEO_KEY_RE, requireMedia } from '../../../../lib/files.
 import { fallbackThumb, fetchOembed, parseVideoUrl } from '../../../../lib/embed.js';
 
 export const PROJECT_COLUMNS =
-  'id, title, description, category, video_key, poster_key, video_size, sort_order, published, provider, provider_id, provider_hash, thumb_url, created_at, updated_at';
+  'id, title, description, category, video_key, poster_key, video_size, sort_order, published, provider, provider_id, provider_hash, thumb_url, role, created_at, updated_at';
 
 export function parseProjectFields(body, { partial = false } = {}) {
   const out = {};
@@ -21,6 +21,11 @@ export function parseProjectFields(body, { partial = false } = {}) {
   if (!partial || 'category' in body) {
     if (!Object.hasOwn(CATEGORIES, body.category)) throw new HttpError(400, 'Geçersiz kategori.');
     out.category = body.category;
+  }
+  if (!partial || 'role' in body) {
+    const r = typeof body.role === 'string' ? body.role.replace(/[\u0000-\u001F\u007F]/g, ' ').trim() : '';
+    if (r.length > 120) throw new HttpError(400, 'Rol en çok 120 karakter olabilir.');
+    out.role = r;
   }
   if (!partial || 'published' in body) out.published = body.published === false || body.published === 0 ? 0 : 1;
   return out;
@@ -67,11 +72,11 @@ export const onRequestPost = handler(async ({ request, env }) => {
   const stmts = [
     env.DB.prepare(
       `INSERT INTO projects (id, title, description, category, video_key, poster_key, video_size, sort_order, published,
-                             provider, provider_id, provider_hash, thumb_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                             provider, provider_id, provider_hash, thumb_url, role)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(
       id, fields.title, fields.description, fields.category, video ? video.key : '', posterKey, video ? video.size : 0, order, fields.published,
-      link ? link.provider : null, link ? link.id : null, link ? link.hash : null, link ? link.thumb : null,
+      link ? link.provider : null, link ? link.id : null, link ? link.hash : null, link ? link.thumb : null, fields.role,
     ),
   ];
   if (video) stmts.push(env.DB.prepare('UPDATE assets SET attached = 1 WHERE key = ?').bind(video.key));
