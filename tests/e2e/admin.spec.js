@@ -25,6 +25,7 @@ test.describe.serial('Admin paneli', () => {
     await expect(page.getByRole('alert')).toContainText('hatalı');
     await login(page);
     await expect(page.getByRole('heading', { name: 'Yeni video ekle' })).toBeVisible();
+    await page.getByRole('button', { name: 'Dosya yükle' }).click();
     await expect(page.getByText('en fazla 500 MB')).toBeVisible();
   });
 
@@ -32,12 +33,13 @@ test.describe.serial('Admin paneli', () => {
     await login(page);
 
     // --- Yükle ---
+    await page.getByRole('button', { name: 'Dosya yükle' }).click();
     await page.getByLabel('Video dosyası').setInputFiles(fixture('sample.webm'));
     await expect(page.getByLabel('Başlık').first()).toHaveValue('sample');
     await page.getByLabel('Başlık').first().fill(TITLE);
     await page.getByLabel('Kategori').first().selectOption('reklam');
     await page.getByLabel('Açıklama (isteğe bağlı)').fill('<img src=x onerror=alert(1)> Test açıklaması');
-    await page.getByRole('button', { name: 'Videoyu yükle ve ekle' }).click();
+    await page.getByRole('button', { name: 'Videoyu ekle' }).click();
     const row = page.locator('.project', { hasText: TITLE });
     await expect(row).toBeVisible({ timeout: 30000 });
     await expect(row.getByText('Yayında')).toBeVisible();
@@ -93,11 +95,12 @@ test.describe.serial('Admin paneli', () => {
     copyFileSync(fixture('sample.webm'), big);
     appendFileSync(big, Buffer.alloc(9 * 1024 * 1024)); // 2 parça (8 MB + kalan)
     await login(page);
+    await page.getByRole('button', { name: 'Dosya yükle' }).click();
     await page.getByLabel('Video dosyası').setInputFiles(big);
     await page.getByLabel('Başlık').first().fill('Büyük dosya testi');
     let partCalls = 0;
     page.on('request', (r) => /\/parts\/\d+$/.test(r.url()) && partCalls++);
-    await page.getByRole('button', { name: 'Videoyu yükle ve ekle' }).click();
+    await page.getByRole('button', { name: 'Videoyu ekle' }).click();
     const row = page.locator('.project', { hasText: 'Büyük dosya testi' });
     await expect(row).toBeVisible({ timeout: 60000 });
     expect(partCalls).toBe(2);
@@ -122,6 +125,7 @@ test.describe.serial('Admin paneli', () => {
     const big = join(dir, 'yarim-mb-ustu.webm');
     copyFileSync(fixture('sample.webm'), big);
     appendFileSync(big, Buffer.alloc(2 * 1024 * 1024));
+    await page.getByRole('button', { name: 'Dosya yükle' }).click();
     await page.getByLabel('Video dosyası').setInputFiles(big);
     await expect(page.locator('.msg[data-state="error"]').first()).toContainText('En fazla 1 MB');
   });

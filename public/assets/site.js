@@ -75,31 +75,51 @@
     }),
   );
 
-  // ---- Video oynatıcı ----
+  // ---- Video oynatıcı (kendi videomuz ya da YouTube/Vimeo gömülü oynatıcı) ----
   const dialog = document.getElementById('player');
   if (dialog && typeof dialog.showModal === 'function') {
     const video = dialog.querySelector('video');
+    const embed = dialog.querySelector('.player-embed');
     const title = document.getElementById('player-title');
     const desc = document.getElementById('player-desc');
     let opener = null;
-    document.querySelectorAll('[data-video]').forEach((btn) =>
+    const stop = () => {
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+      embed.replaceChildren();
+    };
+    document.querySelectorAll('[data-video], [data-embed]').forEach((btn) =>
       btn.addEventListener('click', () => {
         opener = btn;
         title.textContent = btn.dataset.title;
         desc.textContent = btn.dataset.desc || '';
-        video.poster = btn.dataset.poster || '';
-        video.src = btn.dataset.video;
-        dialog.showModal();
-        video.play().catch(() => {});
+        if (btn.dataset.embed) {
+          video.hidden = true;
+          const frame = document.createElement('iframe');
+          frame.src = `${btn.dataset.embed}${btn.dataset.embed.includes('?') ? '&' : '?'}autoplay=1`;
+          frame.title = btn.dataset.title;
+          frame.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+          frame.allowFullscreen = true;
+          frame.referrerPolicy = 'strict-origin-when-cross-origin';
+          embed.replaceChildren(frame);
+          embed.hidden = false;
+          dialog.showModal();
+        } else {
+          embed.hidden = true;
+          video.hidden = false;
+          video.poster = btn.dataset.poster || '';
+          video.src = btn.dataset.video;
+          dialog.showModal();
+          video.play().catch(() => {});
+        }
       }),
     );
     const close = () => dialog.close();
     dialog.querySelector('[data-close]').addEventListener('click', close);
     dialog.addEventListener('click', (e) => { if (e.target === dialog) close(); });
     dialog.addEventListener('close', () => {
-      video.pause();
-      video.removeAttribute('src');
-      video.load();
+      stop();
       if (opener) opener.focus();
     });
   }

@@ -1,9 +1,10 @@
 import { HttpError, handler, json, readJson, uuid } from '../../../../lib/http.js';
 import { CATEGORIES } from '../../../../lib/content.js';
-import { IMAGE_KEY_RE, VIDEO_KEY_RE } from '../../../../lib/files.js';
+import { IMAGE_KEY_RE, VIDEO_KEY_RE, requireMedia } from '../../../../lib/files.js';
+import { fallbackThumb, fetchOembed, parseVideoUrl } from '../../../../lib/embed.js';
 
 export const PROJECT_COLUMNS =
-  'id, title, description, category, video_key, poster_key, video_size, sort_order, published, created_at, updated_at';
+  'id, title, description, category, video_key, poster_key, video_size, sort_order, published, provider, provider_id, provider_hash, thumb_url, created_at, updated_at';
 
 export function parseProjectFields(body, { partial = false } = {}) {
   const out = {};
@@ -43,7 +44,20 @@ export const onRequestGet = handler(async ({ env }) => {
 export const onRequestPost = handler(async ({ request, env }) => {
   const body = await readJson(request, 8192);
   const fields = parseProjectFields(body);
-  const video = await claimAsset(env, body.video_key, 'video', VIDEO_KEY_RE);
+
+  // Video: ya YouTube/Vimeo bağlantısı ya da (R2 varsa) yüklenmiş dosya.
+  let link = null;
+  let video = null;
+  if (typeof body.video_url === 'string' && body.video_url.trim()) {
+    const parsed = parseVideoUrl(body.video_url);
+    if (!parsed) throw new HttpError(400, 'Geçerli bir YouTube veya Vimeo bağlantısı yazın.');
+    const info = await fetchOembed(parsed);
+    link = { ...parsed, thumb: (info && info.thumbnail) || fallbackThumb(parsed) };
+  } else {
+    requireMedia(env);
+    video = await claimAsset(env, body.video_key, 'video', VIDEO_KEY_RE);
+  }
+
   let posterKey = null;
   if (body.poster_key) posterKey = (await claimAsset(env, body.poster_key, 'poster', IMAGE_KEY_RE)).key;
 
@@ -52,11 +66,15 @@ export const onRequestPost = handler(async ({ request, env }) => {
   const order = (min && typeof min.m === 'number' ? min.m : 0) - 1;
   const stmts = [
     env.DB.prepare(
-      `INSERT INTO projects (id, title, description, category, video_key, poster_key, video_size, sort_order, published)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).bind(id, fields.title, fields.description, fields.category, video.key, posterKey, video.size, order, fields.published),
-    env.DB.prepare('UPDATE assets SET attached = 1 WHERE key = ?').bind(video.key),
+      `INSERT INTO projects (id, title, description, category, video_key, poster_key, video_size, sort_order, published,
+                             provider, provider_id, provider_hash, thumb_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).bind(
+      id, fields.title, fields.description, fields.category, video ? video.key : '', posterKey, video ? video.size : 0, order, fields.published,
+      link ? link.provider : null, link ? link.id : null, link ? link.hash : null, link ? link.thumb : null,
+    ),
   ];
+  if (video) stmts.push(env.DB.prepare('UPDATE assets SET attached = 1 WHERE key = ?').bind(video.key));
   if (posterKey) stmts.push(env.DB.prepare('UPDATE assets SET attached = 1 WHERE key = ?').bind(posterKey));
   await env.DB.batch(stmts);
   const row = await env.DB.prepare(`SELECT ${PROJECT_COLUMNS} FROM projects WHERE id = ?`).bind(id).first();

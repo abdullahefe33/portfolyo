@@ -4,6 +4,7 @@ import { CHUNK_BYTES, MAX_IMAGE_BYTES, maxVideoBytes } from '../../../lib/files.
 
 export const onRequestGet = handler(async ({ env }) =>
   json({
+    uploadEnabled: Boolean(env.MEDIA),
     maxVideoBytes: maxVideoBytes(env),
     maxImageBytes: MAX_IMAGE_BYTES,
     chunkBytes: CHUNK_BYTES,

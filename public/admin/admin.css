@@ -36,7 +36,7 @@ a { color: var(--teal); }
 @media (min-width: 40rem) { .row2 { grid-template-columns: 1fr 1fr; } }
 .field { display: grid; gap: 0.35rem; }
 .field > label, .legend { font-weight: 600; font-size: 0.95rem; }
-input[type="text"], input[type="password"], input[type="date"], input[type="email"], select, textarea {
+input[type="text"], input[type="password"], input[type="date"], input[type="email"], input[type="url"], select, textarea {
   width: 100%; min-height: 44px; padding: 0.6rem 0.8rem; font: inherit; color: var(--bone);
   background: var(--ink); border: 1px solid rgba(15, 17, 21, 0.3); border-radius: 10px;
 }
@@ -91,3 +91,8 @@ dialog.confirm p { margin-bottom: 1rem; }
 .toast { position: fixed; left: 50%; bottom: 1.25rem; transform: translateX(-50%); background: var(--bone); color: #ffffff; font-weight: 700; padding: 0.7rem 1.1rem; border-radius: 2px; opacity: 0; pointer-events: none; max-width: calc(100% - 2rem); }
 .toast.show { opacity: 1; }
 @media (prefers-reduced-motion: no-preference) { .toast { transition: opacity 0.2s; } }
+
+.seg { display: inline-flex; gap: 0; border: 2px solid var(--bone); border-radius: 999px; padding: 3px; width: fit-content; }
+.seg button { min-height: 40px; padding: 0 1.1rem; border: 0; border-radius: 999px; background: transparent; color: var(--bone); font: inherit; font-weight: 600; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--bone); color: #ffffff; }
+.seg[hidden], .stack[hidden] { display: none; }

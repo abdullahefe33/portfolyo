@@ -39,7 +39,6 @@ export const onRequestPut = handler(async ({ request, env, params }) => {
     );
   }
   if (stmts.length) await env.DB.batch(stmts);
-  await deleteObjects(env, [oldPoster]);
   return json(await load(env, current.id));
 });
 
@@ -60,6 +59,6 @@ export const onRequestDelete = handler(async ({ env, params }) => {
     } catch { /* bozuk ayar kaydı yok sayılır */ }
   }
   await env.DB.batch(stmts);
-  await deleteObjects(env, [p.video_key, p.poster_key]);
+  await deleteObjects(env, [p.video_key]); // kapak görseli assets satırıyla birlikte silindi
   return json({ ok: true });
 });

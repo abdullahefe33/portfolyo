@@ -182,8 +182,28 @@ async function uploadVideo(file, onProgress) {
   }
 }
 
-async function uploadImage(blob, purpose) {
-  if (blob.size > config.maxImageBytes) throw new Error(`Görsel en çok ${fmtBytes(config.maxImageBytes)} olabilir.`);
+// Görseli tarayıcıda küçültür; sunucu sınırının altında tutar (görseller veritabanında saklanır).
+async function shrinkImage(file, maxSide = 1280) {
+  const limit = config.maxImageBytes * 0.9;
+  if (file.size <= 150 * 1024 && /^image\/(jpeg|png|webp)$/.test(file.type)) return file;
+  let bitmap;
+  try { bitmap = await createImageBitmap(file); } catch { throw new Error('Bu görsel okunamadı. JPG, PNG veya WebP seçin.'); }
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(bitmap.width * scale));
+  c.height = Math.max(1, Math.round(bitmap.height * scale));
+  c.getContext('2d').drawImage(bitmap, 0, 0, c.width, c.height);
+  for (const type of ['image/webp', 'image/jpeg']) {
+    for (const q of [0.88, 0.75, 0.6, 0.45]) {
+      const blob = await new Promise((r) => c.toBlob(r, type, q));
+      if (blob && blob.type === type && blob.size <= limit) return blob;
+    }
+  }
+  throw new Error('Görsel çok büyük. Daha küçük bir görsel seçin.');
+}
+
+async function uploadImage(file, purpose, maxSide) {
+  const blob = await shrinkImage(file, maxSide);
   const r = await api(`/api/admin/images?purpose=${purpose}`, { method: 'POST', body: blob });
   return r.key;
 }
@@ -226,18 +246,41 @@ function projectsView() {
 }
 
 function uploadCard() {
+  const canUpload = config.uploadEnabled;
   const maxMB = Math.round(config.maxVideoBytes / 1048576);
+  let mode = 'link';
+  let autoPoster = null;
   const msg = h('p', { class: 'msg', role: 'status' });
   const progress = h('progress', { max: '1', value: '0', 'aria-label': 'Yükleme ilerlemesi', hidden: true });
-  const preview = h('img', { class: 'poster-preview', alt: 'Otomatik üretilen kapak görseli', hidden: true });
-  let autoPoster = null;
+  const preview = h('img', { class: 'poster-preview', alt: 'Video kapak görseli önizlemesi', hidden: true });
 
-  const fileInput = h('input', { id: 'v-file', type: 'file', accept: 'video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm', required: true });
+  const urlInput = h('input', { id: 'v-url', type: 'url', placeholder: 'https://www.youtube.com/watch?v=…', autocomplete: 'off' });
+  const urlMsg = h('p', { class: 'msg', role: 'status' });
+  const fileInput = h('input', { id: 'v-file', type: 'file', accept: 'video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm' });
   const posterInput = h('input', { id: 'v-poster', type: 'file', accept: 'image/jpeg,image/png,image/webp' });
   const title = h('input', { id: 'v-title', type: 'text', maxlength: '120', required: true });
   const desc = h('textarea', { id: 'v-desc', maxlength: '1000' });
   const cat = categorySelect('v-cat', 'reklam');
   const published = h('input', { id: 'v-pub', type: 'checkbox', checked: true });
+
+  // YouTube / Vimeo bağlantısı: doğrula, başlık ve küçük resmi getir.
+  let previewSeq = 0;
+  urlInput.addEventListener('change', async () => {
+    const url = urlInput.value.trim();
+    const seq = ++previewSeq;
+    preview.hidden = true;
+    if (!url) { setMsg(urlMsg, '', ''); return; }
+    setMsg(urlMsg, '', 'Bağlantı kontrol ediliyor…');
+    try {
+      const info = await api(`/api/admin/link-preview?url=${encodeURIComponent(url)}`);
+      if (seq !== previewSeq) return;
+      setMsg(urlMsg, 'ok', `${info.provider === 'youtube' ? 'YouTube' : 'Vimeo'} videosu bulundu.`);
+      if (info.title && !title.value) title.value = info.title;
+      if (info.thumbnail) { preview.src = info.thumbnail; preview.hidden = false; }
+    } catch (err) {
+      if (seq === previewSeq) setMsg(urlMsg, 'error', err.message);
+    }
+  });
 
   fileInput.addEventListener('change', async () => {
     const f = fileInput.files[0];
@@ -250,38 +293,62 @@ function uploadCard() {
     if (autoPoster) { preview.src = URL.createObjectURL(autoPoster); preview.hidden = false; }
   });
 
+  const linkPanel = h('div', { class: 'stack' },
+    h('p', { class: 'hint' }, 'Videoyu önce YouTube\'a (veya Vimeo\'ya) yükleyin ve görünürlüğünü "Liste dışı" yapın: bağlantıya sahip olanlar izler, aramada çıkmaz. "Özel" yaparsanız sitede oynamaz.'),
+    h('div', { class: 'field' }, h('label', { for: 'v-url' }, 'Video bağlantısı'), urlInput, urlMsg));
+  const filePanel = h('div', { class: 'stack', hidden: true },
+    h('p', { class: 'hint' }, `Dosya başına en fazla ${maxMB} MB. MP4 (H.264) önerilir; MOV ve WebM de kabul edilir. Kapak görseli videodan otomatik alınır.`),
+    h('div', { class: 'field' }, h('label', { for: 'v-file' }, 'Video dosyası'), fileInput));
+
+  const setMode = (m) => {
+    mode = m;
+    linkPanel.hidden = m !== 'link';
+    filePanel.hidden = m !== 'file';
+    seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
+    preview.hidden = true;
+    setMsg(msg, '', '');
+  };
+  const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Ekleme yöntemi', hidden: !canUpload },
+    h('button', { type: 'button', 'data-mode': 'link', 'aria-pressed': 'true', onclick: () => setMode('link') }, 'YouTube / Vimeo bağlantısı'),
+    h('button', { type: 'button', 'data-mode': 'file', 'aria-pressed': 'false', onclick: () => setMode('file') }, 'Dosya yükle'));
+
   const form = h('form', { class: 'card stack', novalidate: true },
-    h('div', {}, h('h2', {}, 'Yeni video ekle'),
-      h('p', { class: 'hint' }, `Dosya başına en fazla ${maxMB} MB. MP4 (H.264) önerilir; MOV ve WebM de kabul edilir. Kapak görseli videodan otomatik alınır, isterseniz kendi görselinizi seçebilirsiniz.`)),
-    h('div', { class: 'field' }, h('label', { for: 'v-file' }, 'Video dosyası'), fileInput),
+    h('h2', {}, 'Yeni video ekle'),
+    seg, linkPanel, filePanel,
     h('div', { class: 'row2' },
       h('div', { class: 'field' }, h('label', { for: 'v-title' }, 'Başlık'), title),
       h('div', { class: 'field' }, h('label', { for: 'v-cat' }, 'Kategori'), cat)),
     h('div', { class: 'field' }, h('label', { for: 'v-desc' }, 'Açıklama (isteğe bağlı)'), desc),
-    h('div', { class: 'field' }, h('label', { for: 'v-poster' }, 'Kendi kapak görselim (isteğe bağlı, JPG/PNG/WebP)'), posterInput, preview),
+    h('div', { class: 'field' }, h('label', { for: 'v-poster' }, 'Kendi kapak görselim (isteğe bağlı; yoksa videonun küçük resmi kullanılır)'), posterInput, preview),
     h('label', { class: 'check', for: 'v-pub' }, published, 'Sitede yayınla'),
     progress,
-    h('div', { class: 'actions' }, h('button', { class: 'btn btn-primary', type: 'submit' }, 'Videoyu yükle ve ekle')),
+    h('div', { class: 'actions' }, h('button', { class: 'btn btn-primary', type: 'submit' }, 'Videoyu ekle')),
     msg);
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const file = fileInput.files[0];
-    if (!file) { setMsg(msg, 'error', 'Lütfen bir video seçin.'); return; }
-    if (file.size > config.maxVideoBytes) { setMsg(msg, 'error', `En fazla ${maxMB} MB yükleyebilirsiniz.`); return; }
-    if (!title.value.trim()) { setMsg(msg, 'error', 'Lütfen bir başlık yazın.'); title.focus(); return; }
     const btn = form.querySelector('button[type="submit"]');
-    btn.disabled = true; progress.hidden = false; progress.value = 0;
+    if (!title.value.trim()) { setMsg(msg, 'error', 'Lütfen bir başlık yazın.'); title.focus(); return; }
+    const base = { title: title.value, description: desc.value, category: cat.value, published: published.checked };
     try {
-      setMsg(msg, '', 'Video yükleniyor…');
-      const video = await uploadVideo(file, (p) => { progress.value = p; setMsg(msg, '', `Video yükleniyor… %${Math.round(p * 100)}`); });
-      let posterKey = null;
-      const custom = posterInput.files[0];
-      if (custom) posterKey = await uploadImage(custom, 'poster');
-      else if (autoPoster) posterKey = await uploadImage(autoPoster, 'poster');
-      await api('/api/admin/projects', { method: 'POST', json: {
-        title: title.value, description: desc.value, category: cat.value, published: published.checked, video_key: video.key, poster_key: posterKey,
-      } });
+      if (mode === 'link') {
+        if (!urlInput.value.trim()) { setMsg(msg, 'error', 'Lütfen bir YouTube veya Vimeo bağlantısı yapıştırın.'); urlInput.focus(); return; }
+        btn.disabled = true;
+        setMsg(msg, '', 'Ekleniyor…');
+        const custom = posterInput.files[0];
+        const posterKey = custom ? await uploadImage(custom, 'poster', 1280) : null;
+        await api('/api/admin/projects', { method: 'POST', json: { ...base, video_url: urlInput.value.trim(), poster_key: posterKey } });
+      } else {
+        const file = fileInput.files[0];
+        if (!file) { setMsg(msg, 'error', 'Lütfen bir video seçin.'); return; }
+        if (file.size > config.maxVideoBytes) { setMsg(msg, 'error', `En fazla ${maxMB} MB yükleyebilirsiniz.`); return; }
+        btn.disabled = true; progress.hidden = false; progress.value = 0;
+        setMsg(msg, '', 'Video yükleniyor…');
+        const video = await uploadVideo(file, (p) => { progress.value = p; setMsg(msg, '', `Video yükleniyor… %${Math.round(p * 100)}`); });
+        const custom = posterInput.files[0];
+        const posterKey = custom ? await uploadImage(custom, 'poster', 1280) : autoPoster ? await uploadImage(autoPoster, 'poster', 1280) : null;
+        await api('/api/admin/projects', { method: 'POST', json: { ...base, video_key: video.key, poster_key: posterKey } });
+      }
       toast('Video eklendi.');
       projects = await api('/api/admin/projects');
       render();
@@ -299,6 +366,8 @@ function projectList() {
   return h('ul', { class: 'projects' }, projects.map((p, i) => projectRow(p, i)));
 }
 
+const projectThumb = (p) => (p.poster_key ? `/media/${p.poster_key}` : (p.thumb_url || ''));
+
 function projectRow(p, i) {
   const move = async (dir) => {
     const ids = projects.map((x) => x.id);
@@ -312,7 +381,7 @@ function projectRow(p, i) {
     } catch (err) { toast(err.message); }
   };
   const remove = async () => {
-    if (!(await confirmDialog(`"${p.title}" videosu ve kapak görseli kalıcı olarak silinecek. Emin misiniz?`))) return;
+    if (!(await confirmDialog(`"${p.title}" sitenizden kalıcı olarak silinecek (YouTube'daki videonuz silinmez). Emin misiniz?`))) return;
     try {
       await api(`/api/admin/projects/${p.id}`, { method: 'DELETE' });
       toast('Video silindi.');
@@ -321,10 +390,10 @@ function projectRow(p, i) {
     } catch (err) { toast(err.message); }
   };
   const row = h('li', { class: 'project' },
-    p.poster_key ? h('img', { class: 'thumb', src: `/media/${p.poster_key}`, alt: '', loading: 'lazy' }) : h('span', { class: 'thumb' }),
+    projectThumb(p) ? h('img', { class: 'thumb', src: projectThumb(p), alt: '', loading: 'lazy' }) : h('span', { class: 'thumb' }),
     h('div', {},
       h('h3', {}, p.title),
-      h('p', { class: 'meta' }, `${config.categories[p.category] || p.category}, ${fmtBytes(p.video_size)}`),
+      h('p', { class: 'meta' }, `${config.categories[p.category] || p.category}, ${p.provider ? (p.provider === 'youtube' ? 'YouTube bağlantısı' : 'Vimeo bağlantısı') : fmtBytes(p.video_size)}`),
       h('span', { class: p.published ? 'badge badge-live' : 'badge' }, p.published ? 'Yayında' : 'Taslak (gizli)')),
     h('div', { class: 'actions' },
       h('button', { class: 'btn btn-sm', type: 'button', 'aria-label': `${p.title} yukarı taşı`, disabled: i === 0, onclick: () => move(-1) }, 'Yukarı'),
@@ -359,7 +428,7 @@ function editForm(p) {
     btn.disabled = true;
     try {
       const body = { title: title.value, description: desc.value, category: cat.value, published: pub.checked };
-      if (poster.files[0]) body.poster_key = await uploadImage(poster.files[0], 'poster');
+      if (poster.files[0]) body.poster_key = await uploadImage(poster.files[0], 'poster', 1280);
       await api(`/api/admin/projects/${p.id}`, { method: 'PUT', json: body });
       toast('Değişiklikler kaydedildi.');
       projects = await api('/api/admin/projects');
@@ -433,7 +502,7 @@ function siteField(obj, def) {
         if (!input.files[0]) return;
         try {
           setMsg(status, '', 'Yükleniyor…');
-          obj[def.k] = await uploadImage(input.files[0], 'portrait');
+          obj[def.k] = await uploadImage(input.files[0], 'portrait', 1000);
           preview.src = `/media/${obj[def.k]}`; preview.hidden = false;
           setMsg(status, 'ok', 'Fotoğraf yüklendi. Kaydet düğmesine basmayı unutmayın.');
         } catch (err) { setMsg(status, 'error', err.message); }

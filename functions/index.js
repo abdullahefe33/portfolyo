@@ -6,7 +6,7 @@ export const onRequestGet = handler(async ({ env }) => {
   const [site, { results }] = await Promise.all([
     getSite(env),
     env.DB.prepare(
-      `SELECT id, title, description, category, video_key, poster_key
+      `SELECT id, title, description, category, video_key, poster_key, provider, provider_id, provider_hash, thumb_url
        FROM projects WHERE published = 1 ORDER BY sort_order ASC, created_at DESC`,
     ).all(),
   ]);

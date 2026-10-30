@@ -1,4 +1,4 @@
-name = "mehmet-abdullah-bardakci"
+name = "mehmet-abdullah-portfolio"
 compatibility_date = "2026-10-01"
 pages_build_output_dir = "public"
 
@@ -9,13 +9,15 @@ MAX_VIDEO_MB = "500"
 [[d1_databases]]
 binding = "DB"
 database_name = "portfolio-db"
-# Cloudflare üzerinde oluşturulan canlı veritabanının kimliği.
-database_id = "9508aa0a-1381-481d-89a3-ae9bf06e897d"
+# Deploy öncesi `wrangler d1 create portfolio-db` çıktısındaki gerçek ID ile değiştirilecek.
+database_id = "00000000-0000-0000-0000-000000000000"
 migrations_dir = "migrations"
 
-[[r2_buckets]]
-binding = "MEDIA"
-bucket_name = "portfolio-media"
+# Videolar YouTube/Vimeo'da durur, kapak görselleri veritabanındadır; R2 gerekmez.
+# İleride dosya yüklemeyi açmak için R2'yi etkinleştirip şu bloğu ekleyin:
+#   [[r2_buckets]]
+#   binding = "MEDIA"
+#   bucket_name = "portfolio-media"
 
 # Gizli değerler (kod veya depoda TUTULMAZ): `wrangler pages secret put <ADI>`
 #   CONTACT_TO      -> iletişim formu mesajlarının gideceği e-posta

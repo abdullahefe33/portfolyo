@@ -1,3 +1,5 @@
+import { fromBase64 } from '../../lib/files.js';
+
 // R2'deki medya dosyalarını Range desteğiyle (video ileri-geri sarma) sunar.
 const KEY_RE = /^(videos|posters|portraits)\/[0-9a-f-]{36}\.(mp4|mov|webm|jpg|png|webp)$/;
 
@@ -18,9 +20,29 @@ function parseRange(header, size) {
   return { offset: start, length: end - start + 1 };
 }
 
+// Görseller (kapak, portre) veritabanında base64 olarak saklanır.
+async function serveImage(env, key) {
+  const row = await env.DB.prepare("SELECT mime, data FROM assets WHERE key = ? AND kind IN ('poster', 'portrait') AND data IS NOT NULL")
+    .bind(key).first();
+  if (!row) return new Response('Bulunamadı', { status: 404 });
+  const bytes = fromBase64(row.data);
+  return new Response(bytes, {
+    headers: {
+      'content-type': row.mime,
+      'content-length': String(bytes.byteLength),
+      'cache-control': 'public, max-age=31536000, immutable',
+      'x-content-type-options': 'nosniff',
+      'cross-origin-resource-policy': 'same-origin',
+      'content-disposition': 'inline',
+    },
+  });
+}
+
 async function serve({ request, env, params }) {
   const key = Array.isArray(params.path) ? params.path.join('/') : String(params.path || '');
   if (!KEY_RE.test(key)) return new Response('Bulunamadı', { status: 404 });
+  if (!key.startsWith('videos/')) return serveImage(env, key);
+  if (!env.MEDIA) return new Response('Bulunamadı', { status: 404 });
 
   const head = await env.MEDIA.head(key);
   if (!head) return new Response('Bulunamadı', { status: 404 });
