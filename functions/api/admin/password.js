@@ -24,6 +24,8 @@ export const onRequestPost = handler(async ({ request, env }) => {
     env.DB.prepare("UPDATE admin_users SET pw_hash = ?, updated_at = datetime('now') WHERE id = 1").bind(await hashPassword(next)),
     // Diğer tüm oturumlar kapatılır.
     env.DB.prepare('DELETE FROM sessions WHERE id != ?').bind(session.id),
+    // Kurulum listesi için: parola en az bir kez değiştirildi
+    env.DB.prepare("INSERT INTO settings (key, value) VALUES ('pw_changed', '1') ON CONFLICT(key) DO UPDATE SET value = '1'"),
   ]);
   return json({ ok: true });
 });

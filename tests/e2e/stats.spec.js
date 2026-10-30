@@ -62,7 +62,7 @@ test.describe('İstatistikler ve Genel bakış', () => {
     for (const t of ['Son 7 gün ziyaret', 'Son 30 gün ziyaret', 'Okunmamış mesaj', 'Yayındaki çalışma']) await expect(page.getByText(t, { exact: true })).toBeVisible();
     await expect(page.getByRole('img', { name: /Son 30 günün günlük ziyaret sayısı/ })).toBeVisible();
     await expect(page.getByLabel('Instagram için site bağlantısı')).toHaveValue(`${ORIGIN}/?utm_source=instagram`);
-    await expect(page.getByText('Kurulum kontrol listesi')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Yapılacaklar|Her şey hazır/ }).or(page.getByText('Her şey hazır.'))).toBeVisible();
     await expect(page.getByText('Mesajların e-postanıza da gelmesini kurun')).toBeVisible();
     // Telefon genişliğinde yatay kaydırma yok
     await page.setViewportSize({ width: 390, height: 800 });

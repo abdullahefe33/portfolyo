@@ -27,3 +27,17 @@ export async function apiLogin(request, ip = freshIp()) {
   const body = await res.json();
   return { res, csrf: body.csrf, ip };
 }
+
+// Site içeriği sekmesinde bir açılır grubu bulur ve açar.
+export async function openGroup(page, title) {
+  const group = page.locator('details.group').filter({ has: page.locator('.group-title', { hasText: new RegExp(`^${title}$`) }) });
+  if (!(await group.evaluate((el) => el.open))) await group.locator('summary').click();
+  return group;
+}
+
+// Çalışmalar sekmesindeki "Daha fazla ayrıntı" kutusunu açar.
+export async function openMore(page) {
+  const more = page.locator('details.more').first();
+  if (!(await more.evaluate((el) => el.open))) await more.locator('summary').click();
+  return more;
+}

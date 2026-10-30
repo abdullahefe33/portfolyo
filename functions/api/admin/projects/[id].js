@@ -1,5 +1,6 @@
 import { HttpError, handler, json, readJson } from '../../../../lib/http.js';
 import { IMAGE_KEY_RE, deleteObjects } from '../../../../lib/files.js';
+import { fallbackThumb, fetchOembed, parseVideoUrl } from '../../../../lib/embed.js';
 import { PROJECT_COLUMNS, claimAsset, parseProjectFields } from './index.js';
 
 const ID_RE = /^[0-9a-f-]{36}$/;
@@ -31,6 +32,24 @@ export const onRequestPut = handler(async ({ request, env, params }) => {
     }
   }
 
+  // Bağlantıyı değiştirme (YouTube/Vimeo). Eski dosya videosu varsa kaldırılır.
+  let oldVideo = null;
+  if (typeof body.video_url === 'string' && body.video_url.trim()) {
+    const parsed = parseVideoUrl(body.video_url);
+    if (!parsed) throw new HttpError(400, 'Geçerli bir YouTube veya Vimeo bağlantısı yazın.');
+    const info = await fetchOembed(parsed);
+    Object.assign(fields, {
+      provider: parsed.provider, provider_id: parsed.id, provider_hash: parsed.hash,
+      thumb_url: (info && info.thumbnail) || fallbackThumb(parsed),
+    });
+    if (current.video_key) {
+      oldVideo = current.video_key;
+      fields.video_key = '';
+      fields.video_size = 0;
+      stmts.push(env.DB.prepare('DELETE FROM assets WHERE key = ?').bind(oldVideo));
+    }
+  }
+
   const keys = Object.keys(fields);
   if (keys.length) {
     const sets = keys.map((k) => `${k} = ?`).join(', ');
@@ -39,6 +58,7 @@ export const onRequestPut = handler(async ({ request, env, params }) => {
     );
   }
   if (stmts.length) await env.DB.batch(stmts);
+  await deleteObjects(env, [oldVideo]);
   return json(await load(env, current.id));
 });
 

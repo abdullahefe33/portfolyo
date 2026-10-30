@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { login } from './helpers.js';
+import { login, openGroup, openMore } from './helpers.js';
 
 const BASE = 'http://127.0.0.1:8788';
 
@@ -62,6 +62,7 @@ test.describe('Güven, paylaşım ve arama motoru', () => {
     await page.getByLabel('Video bağlantısı').fill('https://youtu.be/dQw4w9WgXcQ');
     await page.getByLabel('Video bağlantısı').blur();
     await page.getByLabel('Başlık').first().fill('Rol testi videosu');
+    await openMore(page);
     await page.getByLabel('Bu projedeki rolüm (isteğe bağlı)').fill('Çekim, kurgu, renk');
     await page.getByRole('button', { name: 'Videoyu ekle' }).click();
     const row = page.locator('.project', { hasText: 'Rol testi videosu' });
@@ -69,7 +70,7 @@ test.describe('Güven, paylaşım ve arama motoru', () => {
 
     // Yorum ekle
     await page.getByRole('tab', { name: 'Site içeriği' }).click();
-    const card = page.locator('.card', { has: page.getByRole('heading', { name: /Müşteri yorumları/ }) });
+    const card = await openGroup(page, 'Müşteri yorumları');
     await card.getByRole('button', { name: 'Yeni yorum ekle' }).click();
     const item = card.locator('.repeat-item').last();
     await item.getByLabel('Yorum', { exact: true }).fill('Çok profesyonel çalıştı. <script>window.__q=1</script>');

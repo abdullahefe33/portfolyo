@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { apiLogin, login } from './helpers.js';
+import { apiLogin, login, openMore } from './helpers.js';
 
 const ORIGIN = 'http://127.0.0.1:8788';
 const TITLE = `E2E YouTube ${Date.now()}`;
@@ -50,6 +50,7 @@ test.describe('YouTube / Vimeo bağlantılı videolar', () => {
     await page.getByLabel('Video bağlantısı').blur();
     await expect(page.getByText('YouTube videosu bulundu.')).toBeVisible({ timeout: 20000 });
     await page.getByLabel('Başlık').first().fill(TITLE);
+    await openMore(page);
     await page.getByLabel('Açıklama (isteğe bağlı)').fill('Bağlantıyla eklenen test videosu <b>kalın</b>');
     await page.getByRole('button', { name: 'Videoyu ekle' }).click();
     const row = page.locator('.project', { hasText: TITLE });

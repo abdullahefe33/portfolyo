@@ -12,7 +12,7 @@ export const onRequestGet = handler(async ({ env }) => {
 
   await env.DB.prepare("DELETE FROM stats WHERE day < ?").bind(dayKey(new Date(now - 400 * DAY))).run();
 
-  const [views, refs, plays, cta, msgs, unread, projects, site] = await Promise.all([
+  const [views, refs, plays, cta, msgs, unread, projects, site, pw] = await Promise.all([
     env.DB.prepare("SELECT day, count FROM stats WHERE metric = 'view' AND day >= ?").bind(since).all(),
     env.DB.prepare("SELECT label, SUM(count) AS n FROM stats WHERE metric = 'ref' AND day >= ? GROUP BY label ORDER BY n DESC LIMIT 8").bind(since).all(),
     env.DB.prepare(
@@ -24,6 +24,7 @@ export const onRequestGet = handler(async ({ env }) => {
     env.DB.prepare('SELECT COUNT(*) AS n FROM messages WHERE is_read = 0').first(),
     env.DB.prepare('SELECT COUNT(*) AS total, COALESCE(SUM(published), 0) AS published FROM projects').first(),
     getSite(env),
+    env.DB.prepare("SELECT value FROM settings WHERE key = 'pw_changed'").first(),
   ]);
 
   const byDay = new Map(views.results.map((r) => [r.day, r.count]));
@@ -39,6 +40,7 @@ export const onRequestGet = handler(async ({ env }) => {
     unread: unread.n,
     projects: { total: projects.total, published: projects.published },
     setup: {
+      password: Boolean(pw),
       project: projects.total > 0,
       portrait: Boolean(site.about.photo),
       mail: Boolean(env.RESEND_API_KEY && env.CONTACT_TO),

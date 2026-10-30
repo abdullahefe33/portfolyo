@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { copyFileSync, writeFileSync, appendFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fixture, login } from './helpers.js';
+import { fixture, login, openGroup, openMore } from './helpers.js';
 import { E2E_PASS } from '../../playwright.config.js';
 
 const TITLE = `E2E Reklam ${Date.now()}`;
@@ -38,6 +38,7 @@ test.describe.serial('Admin paneli', () => {
     await expect(page.getByLabel('Başlık').first()).toHaveValue('sample');
     await page.getByLabel('Başlık').first().fill(TITLE);
     await page.getByLabel('Kategori').first().selectOption('reklam');
+    await openMore(page);
     await page.getByLabel('Açıklama (isteğe bağlı)').fill('<img src=x onerror=alert(1)> Test açıklaması');
     await page.getByRole('button', { name: 'Videoyu ekle' }).click();
     const row = page.locator('.project', { hasText: TITLE });
@@ -135,13 +136,16 @@ test.describe.serial('Admin paneli', () => {
     await page.getByRole('tab', { name: 'Site içeriği' }).click();
     const tagline = 'E2E: yeni alt başlık metni';
     await page.getByLabel('Kısa tanıtım cümlesi').fill(tagline);
+    await expect(page.getByText('Kaydedilmemiş değişiklikler var.')).toBeVisible();
+    await openGroup(page, 'Hakkımda');
     await page.getByLabel('Doğum tarihi').fill('2000-01-01');
-    await page.getByRole('button', { name: 'Yeni hizmet ekle' }).click();
-    const services = page.locator('.card', { has: page.getByRole('heading', { name: 'Hizmetler' }) });
+    const services = await openGroup(page, 'Hizmetler');
+    await services.getByRole('button', { name: 'Yeni hizmet ekle' }).click();
     const items = services.locator('.repeat-item').last();
     await items.getByLabel('Başlık').fill('E2E Yeni Hizmet');
     await items.getByLabel('Açıklama').fill('<script>window.__xss=1</script> açıklama');
     await saveSite(page);
+    await expect(page.getByText('Her şey kayıtlı.')).toBeVisible();
 
     const pub = await page.context().newPage();
     await pub.goto('/');
@@ -154,7 +158,7 @@ test.describe.serial('Admin paneli', () => {
     // Geri al
     await page.getByLabel('Doğum tarihi').fill('2004-05-16');
     await page.getByLabel('Kısa tanıtım cümlesi').fill('Fikri sahneye, sahneyi son kareye taşıyorum. Çekim, kurgu ve renk tek elden.');
-    await services.locator('.repeat-item').last().getByRole('button', { name: /sil$/ }).click();
+    await page.locator('details.group').filter({ has: page.locator('.group-title', { hasText: /^Hizmetler$/ }) }).locator('.repeat-item').last().getByRole('button', { name: /sil$/ }).click();
     await saveSite(page);
 
     await pub.reload();
