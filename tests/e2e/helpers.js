@@ -2,12 +2,17 @@ import { E2E_PASS, E2E_USER } from '../../playwright.config.js';
 
 export const fixture = (name) => new URL(`../fixtures/${name}`, import.meta.url).pathname;
 
-export async function login(page) {
+// Normal bir tarayıcı kimliği: robot sayılıp istatistiğe girmemesi için (HeadlessChrome robot sayılır).
+export const HUMAN_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
+
+// Giriş yapar. Varsayılan olarak Çalışmalar sekmesine geçer; Genel bakış için { tab: 'home' } verin.
+export async function login(page, { tab = 'projects' } = {}) {
   await page.goto('/admin/');
   await page.getByLabel('Kullanıcı adı').fill(E2E_USER);
   await page.getByLabel('Parola').fill(E2E_PASS);
   await page.getByRole('button', { name: 'Giriş yap' }).click();
   await page.getByRole('tab', { name: 'Çalışmalar' }).waitFor();
+  if (tab === 'projects') await page.getByRole('tab', { name: 'Çalışmalar' }).click();
 }
 
 // Sunucu tarafında IP'ye göre oran sınırı olduğundan, API testleri sahte ama farklı IP başlığı kullanır.

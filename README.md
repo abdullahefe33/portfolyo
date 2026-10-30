@@ -10,7 +10,7 @@ npm install
 npm run db:local                       # D1 tablolarını oluşturur (yerel)
 npm run admin:set                      # yönetici hesabı oluşturur, rastgele parolayı bir kez yazdırır
 npm run dev                            # http://127.0.0.1:8788  (panel: /admin/)
-npm test                               # Playwright testleri (30 test)
+npm test                               # Playwright testleri (57 test)
 ```
 
 ## Cloudflare'e yayınlama (`.pages.dev`)
@@ -50,7 +50,9 @@ E-posta bildirimi için [Resend](https://resend.com) hesabını mesajların gide
   otomatik kapak görseli, düzenleme, yayından kaldırma, sıralama, silme.
   Dosya yüklemede büyük dosyalar 8 MB parçalarla yüklenir (Pages Functions ~100 MB istek sınırını aşmak için R2 multipart).
 - **Site içeriği:** açılış metni, hakkımda, doğum tarihi (yaş her gün otomatik güncellenir), hizmetler, yetenekler, iletişim, SEO, portre fotoğrafı.
+- **Genel bakış:** ziyaret grafiği (çerezsiz, kişisel veri tutulmaz), ziyaretçilerin geldiği yerler, en çok izlenen çalışmalar, kurulum kontrol listesi, Instagram için izlenebilir bağlantı.
 - **Mesajlar:** iletişim formundan gelenler.
+- **Hesap:** parola değiştirme ve yedek indirme (JSON).
 - **Hesap:** parola değiştirme.
 
 ## Güvenlik özeti (OWASP)
@@ -79,3 +81,9 @@ scripts/     yönetici hesabı betiği
 tests/e2e/   Playwright testleri
 .claude/     kurulu skill'ler: ui-ux-pro-max, frontend-ui-engineering
 ```
+
+## Tasarım ve illüstrasyonlar
+
+Çizimler `lib/art.js` içinde elle yazılmış SVG'lerdir (dron, klaket, makara, kamera maskotu, 8 hizmet ve 4 süreç ikonu, bulut, güneş, uçak).
+Renkler ve hareketleri `public/assets/art.css` yönetir; imleci izleyen göz, harf harf isim ve paralaks `public/assets/site.js` içindedir.
+Tüm hareketler `prefers-reduced-motion` tercihine uyar, ekran dışındaki çizimler duraklar. Paylaşım önizleme görseli `scripts/make-og.mjs` ile üretilir (`public/og.jpg`).

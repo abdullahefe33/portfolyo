@@ -96,3 +96,23 @@ dialog.confirm p { margin-bottom: 1rem; }
 .seg button { min-height: 40px; padding: 0 1.1rem; border: 0; border-radius: 999px; background: transparent; color: var(--bone); font: inherit; font-weight: 600; cursor: pointer; }
 .seg button[aria-pressed="true"] { background: var(--bone); color: #ffffff; }
 .seg[hidden], .stack[hidden] { display: none; }
+
+.stats { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); margin-bottom: 1.5rem; }
+.stat { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 1rem 1.25rem; }
+.stat-v { font-family: var(--font-display); font-weight: 800; font-size: 2.6rem; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.stat-l { color: var(--mute); font-size: 0.95rem; margin-top: 0.35rem; }
+.chart { display: flex; align-items: flex-end; gap: 3px; height: 9rem; margin-top: 1rem; border-bottom: 2px solid var(--bone); }
+.bar { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+.bar i { display: block; width: 100%; background: var(--tally); border-radius: 3px 3px 0 0; min-height: 2px; }
+.bar:last-child i { background: #19c48e; }
+.chart-axis { display: flex; justify-content: space-between; gap: 0.5rem; color: var(--mute); font-size: 0.85rem; margin-top: 0.35rem; }
+.cols2 { display: grid; gap: 1.5rem; }
+@media (min-width: 48rem) { .cols2 { grid-template-columns: 1fr 1fr; } .cols2 > .card { margin-bottom: 0; } .cols2 { margin-bottom: 1.5rem; } }
+.rank { margin: 0.75rem 0 0; padding: 0; list-style: none; display: grid; gap: 0; }
+.rank li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.6rem 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+.rank li:first-child { border-top: 0; }
+.todo { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.75rem; }
+.todo li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.9rem; }
+.todo li > span:nth-child(2) { flex: 1 1 14rem; }
+.card input[readonly] { color: var(--mute); }
+@media (max-width: 40rem) { .tab { padding: 0.75rem 0.7rem; } .top h1 { font-size: 1.5rem; } .stat-v { font-size: 2.1rem; } }

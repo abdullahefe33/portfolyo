@@ -74,6 +74,20 @@
     update();
   }
 
+  // ---- Etkinlik sayacı (kimlik/IP saklanmaz): video oynatma ve iletişim tıklamaları ----
+  const beacon = (e, l) => {
+    try { navigator.sendBeacon('/api/event', new Blob([JSON.stringify({ e, l })], { type: 'application/json' })); } catch { /* sayım zorunlu değil */ }
+  };
+  document.addEventListener('click', (ev) => {
+    const a = ev.target.closest('a[data-cta], a[href^="tel:"], a[href*="wa.me"], a[href*="instagram.com"], a[href="#iletisim"]');
+    if (a) {
+      const href = a.getAttribute('href') || '';
+      beacon('cta', a.dataset.cta || (href.startsWith('tel:') ? 'tel' : href.includes('wa.me') ? 'whatsapp' : href.includes('instagram.com') ? 'instagram' : 'form'));
+    }
+    const card = ev.target.closest('[data-id][data-video], [data-id][data-embed]');
+    if (card) beacon('play', card.dataset.id);
+  });
+
   // ---- Çalışma filtresi (mozaik düzeni görünen kartlara göre yeniden kurulur) ----
   const chips = document.querySelectorAll('.chip[data-filter]');
   const items = [...document.querySelectorAll('.reel-item')];
@@ -140,6 +154,76 @@
       stop();
       if (opener) opener.focus();
     });
+  }
+
+  // ---- Çizimler ve hareket ----
+  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  // Ekran dışındaki çizimler ve bulutlar durur (pil ve işlemci tasarrufu)
+  if ('IntersectionObserver' in window) {
+    const off = new IntersectionObserver((entries) => entries.forEach((en) => en.target.classList.toggle('is-off', !en.isIntersecting)), { rootMargin: '160px' });
+    document.querySelectorAll('.art, .cloud').forEach((el) => off.observe(el));
+  }
+
+  // Başlıkların altındaki el yazısı çizgi, başlık görününce çizilir
+  const heads = document.querySelectorAll('.section h2');
+  if ('IntersectionObserver' in window) {
+    const seen = new IntersectionObserver((entries) => entries.forEach((en) => {
+      if (en.isIntersecting) { en.target.classList.add('in'); seen.unobserve(en.target); }
+    }), { threshold: 0.6 });
+    heads.forEach((h2) => seen.observe(h2));
+  } else {
+    heads.forEach((h2) => h2.classList.add('in'));
+  }
+
+  // İsim harf harf belirir (ekran okuyucu için tam isim aria-label'da)
+  const heroName = document.querySelector('.hero-name');
+  if (heroName && !reduceMotion) {
+    let n = 0;
+    const full = heroName.textContent.trim().replace(/\s+/g, ' ');
+    heroName.querySelectorAll(':scope > span').forEach((word) => {
+      const text = word.textContent;
+      word.textContent = '';
+      word.setAttribute('aria-hidden', 'true');
+      [...text].forEach((ch) => {
+        const i = document.createElement('i');
+        i.textContent = ch;
+        i.style.setProperty('--i', String(n++));
+        word.append(i);
+      });
+    });
+    heroName.setAttribute('aria-label', full);
+    heroName.classList.add('is-split');
+  }
+
+  // Fare hareketiyle dron ve klaket hafifçe kayar
+  const hero = document.querySelector('[data-hero]');
+  if (hero && finePointer && !reduceMotion) {
+    hero.addEventListener('pointermove', (e) => {
+      const r = hero.getBoundingClientRect();
+      hero.style.setProperty('--mx', (((e.clientX - r.left) / r.width) - 0.5).toFixed(3) * 2);
+      hero.style.setProperty('--my', (((e.clientY - r.top) / r.height) - 0.5).toFixed(3) * 2);
+    });
+    hero.addEventListener('pointerleave', () => { hero.style.setProperty('--mx', 0); hero.style.setProperty('--my', 0); });
+  }
+
+  // Kamera maskotunun gözü imleci izler
+  const mascot = document.querySelector('.art-mascot');
+  if (mascot && finePointer && !reduceMotion) {
+    let raf = 0;
+    window.addEventListener('pointermove', (e) => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const r = mascot.getBoundingClientRect();
+        const dx = e.clientX - (r.left + r.width * (156 / 320));
+        const dy = e.clientY - (r.top + r.height * (164 / 310));
+        const d = Math.hypot(dx, dy) || 1;
+        const k = Math.min(d, 260) / 260;
+        mascot.style.setProperty('--ex', ((dx / d) * k * 20).toFixed(1));
+        mascot.style.setProperty('--ey', ((dy / d) * k * 20).toFixed(1));
+      });
+    }, { passive: true });
   }
 
   // ---- İletişim formu: her alanın altında hata, üstte bağlantılı özet ----
@@ -212,6 +296,12 @@
         form.reset();
         setStatus('', 'Mesajınız iletildi. En kısa sürede dönüş yapacağım.');
         status.dataset.state = 'ok';
+        // Kâğıt uçak uçar, sonra geri gelir
+        const panel = document.querySelector('[data-contact]');
+        if (panel && !reduceMotion) {
+          panel.classList.add('sent');
+          setTimeout(() => { panel.classList.remove('sent'); panel.classList.add('back'); setTimeout(() => panel.classList.remove('back'), 900); }, 2600);
+        }
       } catch (err) {
         setStatus('error', err.message || 'Mesaj gönderilemedi. Lütfen tekrar deneyin.');
       } finally {

@@ -3,7 +3,8 @@ const app = document.getElementById('app');
 const toastEl = document.getElementById('toast');
 let csrf = '';
 let config = null;
-let tab = 'projects';
+let tab = 'home';
+let stats = null;
 let projects = [];
 let site = null;
 let messages = [];
@@ -117,14 +118,18 @@ function showLogin(notice = '') {
 }
 
 // ---------- Kabuk ----------
-const TABS = [['projects', 'Çalışmalar'], ['site', 'Site içeriği'], ['messages', 'Mesajlar'], ['account', 'Hesap']];
+const TABS = [['home', 'Genel bakış'], ['projects', 'Çalışmalar'], ['site', 'Site içeriği'], ['messages', 'Mesajlar'], ['account', 'Hesap']];
 
 function shell(content) {
   const unread = messages.filter((m) => !m.is_read).length;
   const bar = h('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Bölümler' },
     TABS.map(([id, label]) => h('button', {
       class: 'tab', role: 'tab', type: 'button', id: `tab-${id}`, 'aria-selected': String(tab === id), 'aria-controls': 'panel',
-      onclick: () => { tab = id; editingId = null; render(); },
+      onclick: async () => {
+        tab = id; editingId = null;
+        if (id === 'home') { try { stats = await api('/api/admin/stats'); } catch { /* eski veriyle devam */ } }
+        render();
+      },
     }, label, id === 'messages' && unread ? h('span', { class: 'count', 'aria-label': `${unread} okunmamış` }, unread) : null)));
   app.removeAttribute('aria-busy');
   app.replaceChildren(h('div', { class: 'shell' },
@@ -144,14 +149,15 @@ async function logout() {
 }
 
 async function render() {
-  if (tab === 'projects') shell(projectsView());
+  if (tab === 'home') shell(homeView());
+  else if (tab === 'projects') shell(projectsView());
   else if (tab === 'site') shell(siteView());
   else if (tab === 'messages') shell(messagesView());
   else shell(accountView());
 }
 
 async function loadAll() {
-  [projects, site, messages] = await Promise.all([api('/api/admin/projects'), api('/api/admin/site'), api('/api/admin/messages')]);
+  [projects, site, messages, stats] = await Promise.all([api('/api/admin/projects'), api('/api/admin/site'), api('/api/admin/messages'), api('/api/admin/stats')]);
 }
 
 // ---------- Yükleme ----------
@@ -234,6 +240,74 @@ async function frameFromVideo(file) {
   } finally {
     URL.revokeObjectURL(url);
   }
+}
+
+// ---------- Genel bakış ----------
+const CTA_LABEL = { tel: 'Telefonla arama', whatsapp: 'WhatsApp', instagram: 'Instagram', form: '"Teklif iste" düğmeleri' };
+const fmtDay = (day) => new Date(`${day}T12:00:00`).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+
+function statCard(label, value) {
+  return h('div', { class: 'stat' }, h('p', { class: 'stat-v' }, String(value)), h('p', { class: 'stat-l' }, label));
+}
+
+function rankList(title, rows, labelOf) {
+  return h('div', { class: 'card' },
+    h('h2', {}, title),
+    rows.length
+      ? h('ol', { class: 'rank' }, rows.map((r) => h('li', {}, h('span', {}, labelOf(r)), h('strong', {}, String(r.n)))))
+      : h('p', { class: 'hint' }, 'Henüz veri yok. Ziyaretçiler geldikçe burada görünür.'));
+}
+
+function barChart(series) {
+  const max = Math.max(1, ...series.map((d) => d.views));
+  const total = series.reduce((a, d) => a + d.views, 0);
+  const bars = series.map((d) => {
+    const bar = h('span', { class: 'bar', title: `${fmtDay(d.day)}: ${d.views} ziyaret` }, h('i', {}));
+    bar.firstChild.style.height = `${Math.max(2, Math.round((d.views / max) * 100))}%`; // CSSOM: CSP ile uyumlu
+    return bar;
+  });
+  return h('div', {},
+    h('div', { class: 'chart', role: 'img', 'aria-label': `Son 30 günün günlük ziyaret sayısı. Toplam ${total}, en yoğun gün ${max} ziyaret.` }, bars),
+    h('p', { class: 'chart-axis', 'aria-hidden': 'true' }, h('span', {}, fmtDay(series[0].day)), h('span', {}, `En yüksek: ${max}`), h('span', {}, 'Bugün')));
+}
+
+function homeView() {
+  if (!stats) return h('p', { class: 'empty' }, 'İstatistikler yüklenemedi.');
+  const igLink = `${location.origin}/?utm_source=instagram`;
+  const todo = [
+    { done: stats.setup.project, text: 'İlk videonuzu ekleyin', go: ['projects', 'Çalışmalara git'] },
+    { done: stats.setup.portrait, text: 'Portre fotoğrafınızı yükleyin (Hakkımda bölümünde görünür)', go: ['site', 'Site içeriğine git'] },
+    { done: stats.setup.mail, text: 'Mesajların e-postanıza da gelmesini kurun', note: 'Kurulana kadar mesajlar yalnızca bu panelde görünür.' },
+  ];
+  return h('div', {},
+    h('div', { class: 'stats' },
+      statCard('Son 7 gün ziyaret', stats.views7),
+      statCard('Son 30 gün ziyaret', stats.views30),
+      statCard('Okunmamış mesaj', stats.unread),
+      statCard('Yayındaki çalışma', stats.projects.published)),
+    h('div', { class: 'card' },
+      h('h2', {}, 'Günlük ziyaret (son 30 gün)'),
+      h('p', { class: 'hint' }, 'Çerez ve kişisel veri tutulmaz; robotlar sayılmaz. Sayılar yaklaşıktır.'),
+      barChart(stats.series)),
+    h('div', { class: 'cols2' },
+      rankList('Ziyaretçiler nereden geliyor', stats.refs, (r) => r.label),
+      rankList('En çok izlenen çalışmalar', stats.plays, (r) => r.title)),
+    h('div', { class: 'cols2' },
+      rankList('Tıklanan iletişim yolları', stats.cta, (r) => CTA_LABEL[r.label] || r.label),
+      h('div', { class: 'card' }, h('h2', {}, 'Son 30 günde gelen mesaj'), h('p', { class: 'stat-v' }, String(stats.messages30)))),
+    h('div', { class: 'card stack' },
+      h('h2', {}, 'Kurulum kontrol listesi'),
+      h('ul', { class: 'todo' }, todo.map((t) => h('li', {},
+        h('span', { class: t.done ? 'badge badge-live' : 'badge' }, t.done ? 'Tamam' : 'Yapılacak'),
+        h('span', {}, t.text, !t.done && t.note ? h('em', { class: 'hint' }, ` ${t.note}`) : null),
+        !t.done && t.go ? h('button', { class: 'btn btn-sm', type: 'button', onclick: () => { tab = t.go[0]; render(); } }, t.go[1]) : null)))),
+    h('div', { class: 'card stack' },
+      h('div', {}, h('h2', {}, 'Instagram bağlantınız'),
+        h('p', { class: 'hint' }, 'Bu bağlantıyı Instagram biyografinize koyarsanız, kaç kişinin oradan geldiğini yukarıda "instagram" olarak görürsünüz.')),
+      h('input', { type: 'text', readonly: true, value: igLink, 'aria-label': 'Instagram için site bağlantısı' }),
+      h('div', { class: 'actions' }, h('button', { class: 'btn btn-sm', type: 'button', onclick: async () => {
+        try { await navigator.clipboard.writeText(igLink); toast('Bağlantı kopyalandı.'); } catch { toast('Kopyalanamadı; metni elle seçin.'); }
+      } }, 'Bağlantıyı kopyala'))));
 }
 
 // ---------- Çalışmalar ----------
@@ -563,6 +637,11 @@ function siteView() {
 }
 
 // ---------- Mesajlar ----------
+function waLink(phone) {
+  const d = String(phone || '').replace(/\D/g, '');
+  return d.length >= 10 ? `https://wa.me/90${d.slice(-10)}` : '';
+}
+
 function messagesView() {
   if (!messages.length) return h('p', { class: 'empty' }, 'Henüz mesaj yok. İletişim formundan gelen mesajlar burada görünür.');
   return h('div', {}, messages.map((m) => h('article', { class: `message${m.is_read ? '' : ' unread'}` },
@@ -572,6 +651,8 @@ function messagesView() {
     h('p', { class: 'meta' }, h('a', { href: `mailto:${m.email}` }, m.email), m.phone ? h('span', {}, ` / ${m.phone}`) : null),
     h('p', { class: 'body' }, m.body),
     h('div', { class: 'actions' },
+      h('a', { class: 'btn btn-sm', href: `mailto:${m.email}?subject=${encodeURIComponent(`Re: ${m.subject || 'Mesajınız'}`)}` }, 'E-postayla yanıtla'),
+      waLink(m.phone) ? h('a', { class: 'btn btn-sm', href: waLink(m.phone), target: '_blank', rel: 'noopener noreferrer' }, 'WhatsApp\'tan yaz') : null,
       h('button', { class: 'btn btn-sm', type: 'button', onclick: async () => {
         try { await api(`/api/admin/messages/${m.id}`, { method: 'PATCH', json: { is_read: !m.is_read } }); m.is_read = m.is_read ? 0 : 1; render(); } catch (err) { toast(err.message); }
       } }, m.is_read ? 'Okunmadı yap' : 'Okundu yap'),
@@ -582,10 +663,25 @@ function messagesView() {
 }
 
 // ---------- Hesap ----------
+async function downloadBackup() {
+  try {
+    const res = await fetch('/api/admin/export', { credentials: 'same-origin' });
+    if (!res.ok) throw new Error('Yedek alınamadı.');
+    const url = URL.createObjectURL(await res.blob());
+    const a = h('a', { href: url, download: `portfolyo-yedek-${new Date().toISOString().slice(0, 10)}.json` });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('Yedek indirildi.');
+  } catch (err) { toast(err.message); }
+}
+
 function accountView() {
   const msg = h('p', { class: 'msg', role: 'status' });
   const cur = h('input', { id: 'pw-cur', type: 'password', autocomplete: 'current-password', required: true });
   const next = h('input', { id: 'pw-new', type: 'password', autocomplete: 'new-password', minlength: '12', required: true });
+  const backup = h('div', { class: 'card stack' },
+    h('div', {}, h('h2', {}, 'Yedek'), h('p', { class: 'hint' }, 'Site metinlerinizi, çalışmalarınızı ve mesajlarınızı bir JSON dosyası olarak indirin. Görseller dosyada yoktur; videolar YouTube/Vimeo bağlantısı olarak durur.')),
+    h('div', { class: 'actions' }, h('button', { class: 'btn', type: 'button', onclick: downloadBackup }, 'Yedeği indir')));
   const form = h('form', { class: 'card stack', novalidate: true },
     h('div', {}, h('h2', {}, 'Parolayı değiştir'), h('p', { class: 'hint' }, 'En az 12 karakter. Değişiklikten sonra diğer tüm oturumlar kapanır.')),
     h('div', { class: 'field' }, h('label', { for: 'pw-cur' }, 'Mevcut parola'), cur),
@@ -600,7 +696,7 @@ function accountView() {
       setMsg(msg, 'ok', 'Parola güncellendi.');
     } catch (err) { setMsg(msg, 'error', err.message); }
   });
-  return form;
+  return h('div', {}, form, backup);
 }
 
 // ---------- Başlangıç ----------

@@ -1,6 +1,7 @@
 import { HttpError, assertSameOrigin, handler, json, readJson, uuid } from '../../lib/http.js';
 import { ipKey, rateCheck, rateHit, tooMany } from '../../lib/auth.js';
 import { notifyByMail } from '../../lib/mail.js';
+import { record } from '../../lib/stats.js';
 
 const EMAIL_RE = /^[^\s@<>()[\]\\,;:"]{1,64}@[^\s@<>()[\]\\,;:"]{1,190}\.[A-Za-z]{2,}$/;
 const LIMIT = 5; // saatte IP başına en çok 5 mesaj
@@ -38,6 +39,8 @@ export const onRequestPost = handler(async (context) => {
   const id = uuid();
   await env.DB.prepare('INSERT INTO messages (id, name, email, phone, subject, body) VALUES (?, ?, ?, ?, ?, ?)')
     .bind(id, msg.name, msg.email, msg.phone, msg.subject, msg.body).run();
+
+  context.waitUntil(record(env, 'msg'));
 
   // Mesaj önce veritabanına yazılır; e-posta gitmese bile kaybolmaz (admin panelinde görünür).
   const send = notifyByMail(env, msg)

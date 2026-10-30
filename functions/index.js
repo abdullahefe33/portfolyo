@@ -1,8 +1,10 @@
 import { getSite } from '../lib/content.js';
 import { renderHome } from '../lib/render.js';
 import { handler } from '../lib/http.js';
+import { isBot, record, sourceLabel } from '../lib/stats.js';
 
-export const onRequestGet = handler(async ({ env, request }) => {
+export const onRequestGet = handler(async (context) => {
+  const { env, request } = context;
   const [site, { results }] = await Promise.all([
     getSite(env),
     env.DB.prepare(
@@ -10,6 +12,12 @@ export const onRequestGet = handler(async ({ env, request }) => {
        FROM projects WHERE published = 1 ORDER BY sort_order ASC, created_at DESC`,
     ).all(),
   ]);
+
+  // Ziyaret sayacı: robotlar ve kendi sayfa yenilemeleri sayılmaz.
+  if (!isBot(request.headers.get('user-agent'))) {
+    const source = sourceLabel(request);
+    if (source) context.waitUntil(Promise.all([record(env, 'view'), record(env, 'ref', source)]));
+  }
 
   return new Response(renderHome({ site, projects: results, origin: new URL(request.url).origin }), {
     headers: {

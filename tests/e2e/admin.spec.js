@@ -121,7 +121,7 @@ test.describe.serial('Admin paneli', () => {
       await route.fulfill({ response: res, json: { ...body, maxVideoBytes: 1024 * 1024 } });
     });
     await page.reload();
-    await page.getByRole('tab', { name: 'Çalışmalar' }).waitFor();
+    await page.getByRole('tab', { name: 'Çalışmalar' }).click();
     const big = join(dir, 'yarim-mb-ustu.webm');
     copyFileSync(fixture('sample.webm'), big);
     appendFileSync(big, Buffer.alloc(2 * 1024 * 1024));
