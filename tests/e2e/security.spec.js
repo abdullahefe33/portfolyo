@@ -109,6 +109,10 @@ test.describe('Güvenlik (OWASP)', () => {
 
     expect((await send({ ...valid, email: 'ali@example.com\r\nBcc: hedef@example.com' })).status()).toBe(400);
     expect((await send({ ...valid, email: 'bozuk' })).status()).toBe(400);
+    // mailto parametre enjeksiyonu: ? & = içeren adresler kabul edilmez
+    for (const evil of ['x?bcc=attacker@evil.com', 'a&cc=b@c.com@d.com', 'a=b@c.com', "a'b@c.com", 'a b@c.com']) {
+      expect((await send({ ...valid, email: evil })).status(), evil).toBe(400);
+    }
     expect((await send({ ...valid, message: 'kısa' })).status()).toBe(400);
     expect((await send({ ...valid, website: 'http://spam.example' })).status()).toBe(200); // sessizce yok sayılır
     const tooFast = await request.post('/api/contact', { headers: { origin: ORIGIN, 'cf-connecting-ip': ip }, data: { ...valid, t: Date.now() } });

@@ -47,6 +47,31 @@ test.describe('404, simge, WhatsApp, canlı önizleme, yanıt notu', () => {
     }
   });
 
+  test('köşe mührü: yazı panelden değişir, boşsa görünmez; yaş rozeti yok', async ({ page, request }) => {
+    const { csrf } = await apiLogin(request);
+    const h = { origin: ORIGIN, 'x-csrf-token': csrf };
+    await page.goto('/');
+    await expect(page.locator('.stamp')).toBeVisible();
+    await expect(page.locator('.stamp .sr-only')).toHaveText('Yeni projelere açığım');
+    await expect(page.locator('.age-badge')).toHaveCount(0);
+    await expect(page.locator('[data-age]')).toHaveCount(1); // yaş yalnızca Hakkımda'da
+
+    const site = await (await request.get('/api/admin/site')).json();
+    try {
+      site.hero.badge = 'Haziran için müsaitim <b>x</b>';
+      expect((await request.put('/api/admin/site', { headers: h, data: site })).status()).toBe(200);
+      await page.reload();
+      await expect(page.locator('.stamp .sr-only')).toHaveText('Haziran için müsaitim <b>x</b>'); // HTML çalışmaz
+      site.hero.badge = '';
+      await request.put('/api/admin/site', { headers: h, data: site });
+      await page.reload();
+      await expect(page.locator('.stamp')).toHaveCount(0);
+    } finally {
+      site.hero.badge = 'Yeni projelere açığım';
+      await request.put('/api/admin/site', { headers: h, data: site });
+    }
+  });
+
   test('ana video YouTube ise geniş ekranda sessiz canlı önizleme yüklenir', async ({ browser, request }) => {
     const { csrf } = await apiLogin(request);
     const created = await request.post('/api/admin/projects', {

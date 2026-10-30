@@ -2,6 +2,9 @@ import { state, hooks, h, icon, toast, api, confirmDialog, relTime, fmtDate } fr
 
 let filter = 'all'; // 'all' | 'new'
 
+// Adres kodlanır (? & = gibi karakterler mailto parametresi sayılmasın); yalnızca @ okunur kalır.
+const mailAddr = (email) => encodeURIComponent(email).replace('%40', '@');
+
 function waLink(phone) {
   const d = String(phone || '').replace(/\D/g, '');
   return d.length >= 10 ? `https://wa.me/90${d.slice(-10)}` : '';
@@ -35,10 +38,10 @@ export function messagesView() {
       h('h3', {}, m.name, !m.is_read ? h('span', { class: 'badge badge-live' }, 'Yeni') : null),
       h('p', { class: 'meta', title: fmtDate(m.created_at) }, relTime(m.created_at), m.subject ? `, konu: ${m.subject}` : '',
         m.mailed ? ', e-posta ile de iletildi' : ', e-posta gönderilmedi (yalnızca burada)'),
-      h('p', { class: 'meta' }, h('a', { href: `mailto:${m.email}` }, m.email), m.phone ? h('span', {}, ` / ${m.phone}`) : null),
+      h('p', { class: 'meta' }, h('a', { href: `mailto:${mailAddr(m.email)}` }, m.email), m.phone ? h('span', {}, ` / ${m.phone}`) : null),
       h('p', { class: 'body' }, m.body),
       h('div', { class: 'actions' },
-        h('a', { class: 'btn btn-sm btn-primary', href: `mailto:${m.email}?subject=${encodeURIComponent(`Re: ${m.subject || 'Mesajınız'}`)}` }, icon('mail', 16), 'E-postayla yanıtla'),
+        h('a', { class: 'btn btn-sm btn-primary', href: `mailto:${mailAddr(m.email)}?subject=${encodeURIComponent(`Re: ${m.subject || 'Mesajınız'}`)}` }, icon('mail', 16), 'E-postayla yanıtla'),
         waLink(m.phone) ? h('a', { class: 'btn btn-sm', href: waLink(m.phone), target: '_blank', rel: 'noopener noreferrer' }, 'WhatsApp\'tan yaz') : null,
         h('button', { class: 'btn btn-sm', type: 'button', onclick: async () => {
           try { await api(`/api/admin/messages/${m.id}`, { method: 'PATCH', json: { is_read: !m.is_read } }); m.is_read = m.is_read ? 0 : 1; hooks.render(); } catch (err) { toast(err.message); }

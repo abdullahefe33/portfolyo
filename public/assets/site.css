@@ -139,20 +139,6 @@ a { color: inherit; }
 .hero-hills { position: absolute; inset: auto 0 0 0; height: 38%; background: var(--ink); clip-path: polygon(0 100%, 0 52%, 18% 24%, 34% 54%, 52% 6%, 70% 48%, 84% 22%, 100% 50%, 100% 100%); }
 .hero-note { position: absolute; left: 1.4rem; bottom: 1.4rem; background: var(--white); border-radius: 999px; padding: 0.4rem 1.1rem; font-weight: 700; font-size: 0.95rem; }
 
-.age-badge {
-  position: absolute; right: 0; bottom: 0; width: 8.25rem; height: 8.25rem; border-radius: 50%; background: var(--mint); color: var(--ink);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; text-align: center;
-  box-shadow: 0 0 0 6px var(--paper);
-}
-.age-badge strong { font-family: var(--font-display); font-weight: 800; font-size: 3.4rem; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
-.age-badge span { font-weight: 600; font-size: 0.95rem; margin-top: 0.15rem; }
-.spin-badge {
-  position: absolute; top: 0; right: 0; width: 7.75rem; height: 7.75rem; border-radius: 50%; background: var(--lemon); color: var(--ink);
-  display: grid; place-items: center; box-shadow: 0 0 0 6px var(--paper);
-}
-.spin-badge > svg { position: absolute; inset: 0; width: 100%; height: 100%; animation: spin 26s linear infinite; }
-.spin-badge text { font-family: var(--font-body); font-weight: 700; font-size: 11.5px; fill: currentColor; }
-.spin-badge i { display: grid; place-items: center; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Sayfa açılışında tek, sıralı beliriş (hareket tercihi varsa) */

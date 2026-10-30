@@ -10,6 +10,7 @@ const GROUPS = [
       { k: 'tagline', label: 'Kısa tanıtım cümlesi', type: 'textarea' },
       { k: 'cta_primary', label: 'Birinci buton yazısı' },
       { k: 'cta_secondary', label: 'İkinci buton yazısı' },
+      { k: 'badge', label: 'Köşedeki dönen mühür yazısı (boşsa görünmez)', help: 'Örn: Yeni projelere açığım' },
       { k: 'showreel_project_id', label: 'Açılıştaki ana video', type: 'project', help: 'Çalışmalar sekmesinden "Ana video yap" ile de seçebilirsiniz.' },
     ] },
   ] },

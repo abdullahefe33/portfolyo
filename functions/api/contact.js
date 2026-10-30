@@ -3,7 +3,8 @@ import { ipKey, rateCheck, rateHit, tooMany } from '../../lib/auth.js';
 import { notifyByMail } from '../../lib/mail.js';
 import { record } from '../../lib/stats.js';
 
-const EMAIL_RE = /^[^\s@<>()[\]\\,;:"]{1,64}@[^\s@<>()[\]\\,;:"]{1,190}\.[A-Za-z]{2,}$/;
+// Yalnızca güvenli karakterler: ? & = gibi URL/mailto anlamı taşıyanlar reddedilir (mailto parametre enjeksiyonu).
+const EMAIL_RE = /^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
 const LIMIT = 5; // saatte IP başına en çok 5 mesaj
 const WINDOW = 3600;
 const MIN_FILL_MS = 2500;
