@@ -52,6 +52,7 @@ const GROUPS = [
     { path: 'seo', fields: [
       { k: 'title', label: 'Sayfa başlığı' },
       { k: 'description', label: 'Sayfa açıklaması', type: 'textarea', help: 'Yaklaşık 150 karakter ideal.' },
+      { k: 'verification', label: 'Google Search Console doğrulama kodu (isteğe bağlı)', help: 'search.google.com/search-console adresinde siteyi ekleyip "HTML etiketi" yöntemini seçin; content="..." içindeki kodu buraya yapıştırın.' },
     ] },
   ] },
 ];

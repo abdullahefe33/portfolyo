@@ -10,7 +10,7 @@ npm install
 npm run db:local                       # D1 tablolarını oluşturur (yerel)
 npm run admin:set                      # yönetici hesabı oluşturur, rastgele parolayı bir kez yazdırır
 npm run dev                            # http://127.0.0.1:8788  (panel: /admin/)
-npm test                               # Playwright testleri (85 test)
+npm test                               # Playwright testleri (88 test)
 ```
 
 ## Cloudflare'e yayınlama (`.pages.dev`)
