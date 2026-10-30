@@ -1,0 +1,5 @@
+# Yerel geliştirme için örnek. Kopyalayıp .dev.vars yapın; .dev.vars depoya girmez.
+CONTACT_TO=ornek@example.com
+RESEND_API_KEY=
+MAIL_FROM=
+IP_PEPPER=degistir-rastgele-uzun-bir-metin
