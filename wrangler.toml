@@ -1,0 +1,26 @@
+name = "mehmet-abdullah-bardakci"
+compatibility_date = "2026-10-01"
+pages_build_output_dir = "public"
+
+[vars]
+# Admin panelinden yüklenebilecek en büyük video boyutu (MB).
+MAX_VIDEO_MB = "500"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "portfolio-db"
+# Cloudflare üzerinde oluşturulan canlı veritabanının kimliği.
+database_id = "9508aa0a-1381-481d-89a3-ae9bf06e897d"
+migrations_dir = "migrations"
+
+# Videolar YouTube/Vimeo'da durur, kapak görselleri veritabanındadır; R2 gerekmez.
+# İleride dosya yüklemeyi açmak için R2'yi etkinleştirip şu bloğu ekleyin:
+#   [[r2_buckets]]
+#   binding = "MEDIA"
+#   bucket_name = "portfolio-media"
+
+# Gizli değerler (kod veya depoda TUTULMAZ): `wrangler pages secret put <ADI>`
+#   CONTACT_TO      -> iletişim formu mesajlarının gideceği e-posta
+#   RESEND_API_KEY  -> e-posta gönderimi için Resend API anahtarı (opsiyonel)
+#   MAIL_FROM       -> gönderen adresi (opsiyonel)
+#   IP_PEPPER       -> IP özetleri için rastgele uzun metin
